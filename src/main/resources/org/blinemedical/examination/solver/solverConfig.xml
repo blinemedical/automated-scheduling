@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<solver xmlns="https://www.optaplanner.org/xsd/solver"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://www.optaplanner.org/xsd/solver https://www.optaplanner.org/xsd/solver/solver.xsd">
+    <!-- Domain model configuration -->
+    <solutionClass>org.blinemedical.examination.domain.Examination</solutionClass>
+    <entityClass>org.blinemedical.examination.domain.Exam</entityClass>
+
+    <!-- Score configuration -->
+    <scoreDirectorFactory>
+        <easyScoreCalculatorClass>
+            org.blinemedical.examination.solver.score.ExaminationEasyScoreCalculator
+        </easyScoreCalculatorClass>
+    </scoreDirectorFactory>
+
+    <constructionHeuristic>
+        <constructionHeuristicType>FIRST_FIT</constructionHeuristicType>
+    </constructionHeuristic>
+
+    <localSearch>
+        <termination>
+            <unimprovedSecondsSpentLimit>5</unimprovedSecondsSpentLimit>
+        </termination>
+        <unionMoveSelector>
+            <changeMoveSelector>
+                <selectionOrder>RANDOM</selectionOrder>
+            </changeMoveSelector>
+            <moveListFactory>
+                <moveListFactoryClass>
+                    org.blinemedical.examination.solver.move.factory.ChangeRoomMoveFactory
+                </moveListFactoryClass>
+            </moveListFactory>
+        </unionMoveSelector>
+    </localSearch>
+</solver>
