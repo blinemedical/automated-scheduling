@@ -1,10 +1,9 @@
 package org.blinemedical.examination.domain;
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 
 public class AbstractPersistable {
+
     protected Long id;
 
     protected AbstractPersistable() {
@@ -25,6 +24,6 @@ public class AbstractPersistable {
 
     @Override
     public String toString() {
-        return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+        return getClass().getName().replaceAll(".*\\.", "") + "-" + id;
     }
 }
