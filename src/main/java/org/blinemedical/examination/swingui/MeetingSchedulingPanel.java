@@ -24,7 +24,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
-import org.apache.commons.lang3.tuple.Pair;
 import org.blinemedical.examination.domain.Day;
 import org.blinemedical.examination.domain.Meeting;
 import org.blinemedical.examination.domain.MeetingAssignment;
@@ -44,7 +43,7 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
     public static final String LOGO_PATH = "/org/blinemedical/examination/swingui/meetingSchedulingLogo.png";
 
     private final TimeTablePanel<TimeGrain, Room> roomsPanel;
-    private final TimeTablePanel<TimeGrain, Pair<Person, Boolean>> personsPanel;
+    private final TimeTablePanel<TimeGrain, Person> personsPanel;
     private final OvertimeTimeGrain OVERTIME_TIME_GRAIN = new OvertimeTimeGrain();
 
     public MeetingSchedulingPanel() {
@@ -94,7 +93,7 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         personsPanel.defineRowHeaderByKey(HEADER_ROW_GROUP1); // Day header
         personsPanel.defineRowHeaderByKey(HEADER_ROW); // TimeGrain header
         for (Person person : meetingSchedule.getPersonList()) {
-            personsPanel.defineRowHeader(Pair.of(person, Boolean.TRUE));
+            personsPanel.defineRowHeader(person);
         }
     }
 
@@ -120,8 +119,11 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
 
     private void fillPersonCells(MeetingSchedule meetingSchedule) {
         for (Person person : meetingSchedule.getPersonList()) {
-            personsPanel.addRowHeader(HEADER_COLUMN_GROUP1, Pair.of(person, Boolean.TRUE),
-                createTableHeader(new JLabel(person.getLabel(), SwingConstants.CENTER)));
+            JPanel panel = createTableHeader(new JLabel(person.getLabel(), SwingConstants.CENTER));
+            panel.setBackground(person.isPatient()
+                ? Color.decode("#9EA6D1") // Light blue
+                :  Color.decode("#9ED19E")); // Light green
+            personsPanel.addRowHeader(HEADER_COLUMN_GROUP1, person, panel);
         }
     }
 
@@ -188,20 +190,16 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
                 lastTimeGrain, meetingAssignment.getRoom(),
                 createButton(meetingAssignment, color));
 
-            Pair<Person, Boolean> learnerPair = Pair.of(
-                meetingAssignment.getMeeting().getRequiredLearner().getPerson(),
-                Boolean.TRUE);
+            Person learner = meetingAssignment.getMeeting().getRequiredLearner().getPerson();
             personsPanel.addCell(
-                startingTimeGrain, learnerPair,
-                lastTimeGrain, learnerPair,
+                startingTimeGrain, learner,
+                lastTimeGrain, learner,
                 createButton(meetingAssignment, color));
 
-            Pair<Person, Boolean> patientPair = Pair.of(
-                meetingAssignment.getMeeting().getRequiredPatient().getPerson(),
-                Boolean.TRUE);
+            Person patient = meetingAssignment.getMeeting().getRequiredPatient().getPerson();
             personsPanel.addCell(
-                startingTimeGrain, patientPair,
-                lastTimeGrain, patientPair,
+                startingTimeGrain, patient,
+                lastTimeGrain, patient,
                 createButton(meetingAssignment, color));
         }
     }

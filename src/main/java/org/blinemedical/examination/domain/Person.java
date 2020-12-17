@@ -6,6 +6,7 @@ import org.optaplanner.examples.common.swingui.components.Labeled;
 public class Person extends AbstractPersistable implements Labeled {
 
     private String fullName;
+    private boolean patient;
 
     public String getFullName() {
         return fullName;
@@ -15,14 +16,22 @@ public class Person extends AbstractPersistable implements Labeled {
         this.fullName = fullName;
     }
 
+    public boolean isPatient() {
+        return patient;
+    }
+
+    public void setPatient(boolean patient) {
+        this.patient = patient;
+    }
+
     @Override
     public String getLabel() {
-        return fullName;
+        return fullName + " (" + (patient ? "P" : "L") + ")";
     }
 
     @Override
     public String toString() {
-        return fullName;
+        return fullName + " (" + (patient ? "P" : "L") + ")";
     }
 
 }

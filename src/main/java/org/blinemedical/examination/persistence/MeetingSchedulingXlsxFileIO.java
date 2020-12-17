@@ -138,6 +138,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextSheet("Persons");
             nextRow(false);
             readHeaderCell("Full name");
+            readHeaderCell("Patient");
             List<Person> personList = new ArrayList<>(currentSheet.getLastRowNum() - 1);
             long id = 0L;
             while (nextRow()) {
@@ -150,6 +151,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                             + ") must match to the regular expression (" + VALID_NAME_PATTERN
                             + ").");
                 }
+                person.setPatient(nextStringCell().getStringCellValue().equalsIgnoreCase("y"));
                 personList.add(person);
             }
             solution.setPersonList(personList);
@@ -462,9 +464,11 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextSheet("Persons", 1, 0, false);
             nextRow();
             nextHeaderCell("Full name");
+            nextHeaderCell("Patient");
             for (Person person : solution.getPersonList()) {
                 nextRow();
                 nextCell().setCellValue(person.getFullName());
+                nextCell().setCellValue(person.isPatient() ? "Y" : "");
             }
             autoSizeColumnsWithHeader();
         }
