@@ -217,7 +217,6 @@ public class MeetingSchedulingGenerator {
             Meeting meeting = new Meeting();
             meeting.setId((long) i);
             String topic = topicGenerator.generateNextValue();
-            meeting.setTopic(topic);
             int durationInGrains = durationInGrainsOptions[random
                 .nextInt(durationInGrainsOptions.length)];
             meeting.setDurationInGrains(durationInGrains);

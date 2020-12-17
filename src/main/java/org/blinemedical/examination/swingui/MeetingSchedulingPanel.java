@@ -241,8 +241,7 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         public MeetingAssignmentAction(MeetingAssignment meetingAssignment) {
             super(meetingAssignment.getLabel());
             putValue(SHORT_DESCRIPTION,
-                "<html>Topic: " + meetingAssignment.getMeeting().getTopic() + "<br/>"
-                    + "Date and time: " + defaultIfNull(
+                "<html>Date and time: " + defaultIfNull(
                     meetingAssignment.getStartingDateTimeString(), "unassigned") + "<br/>"
                     + "Duration: " + meetingAssignment.getMeeting().getDurationString() + "<br/>"
                     + "Room: " + defaultIfNull(meetingAssignment.getRoom(), "unassigned")

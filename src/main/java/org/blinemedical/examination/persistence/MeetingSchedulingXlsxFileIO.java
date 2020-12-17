@@ -182,11 +182,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 toMap(Person::getFullName, person -> person));
             nextSheet("Meetings");
             nextRow(false);
-            readHeaderCell("Topic");
             readHeaderCell("Group");
             readHeaderCell("Duration");
             readHeaderCell("Speakers");
-            readHeaderCell("Content");
             readHeaderCell("Required attendance list");
             readHeaderCell("Preferred attendance list");
             readHeaderCell("Day");
@@ -212,12 +210,10 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 meeting.setId(meetingId++);
                 meetingAssignment.setId(meetingAssignmentId++);
 
-                meeting.setTopic(nextStringCell().getStringCellValue());
                 meeting.setEntireGroupMeeting(
-                    nextStringCell().getStringCellValue().toLowerCase().equals("y"));
+                    nextStringCell().getStringCellValue().equalsIgnoreCase("y"));
                 readMeetingDuration(meeting);
                 readSpeakerList(personMap, meeting, speakerAttendanceList, speakerSet);
-                meeting.setContent(nextStringCell().getStringCellValue());
 
                 if (meeting.isEntireGroupMeeting()) {
                     List<RequiredAttendance> requiredAttendanceList = new ArrayList<>(
@@ -624,11 +620,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
         private void writeMeetings() {
             nextSheet("Meetings", 1, 1, false);
             nextRow();
-            nextHeaderCell("Topic");
             nextHeaderCell("Group");
             nextHeaderCell("Duration");
             nextHeaderCell("Speakers");
-            nextHeaderCell("Content");
             nextHeaderCell("Required attendance list");
             nextHeaderCell("Preferred attendance list");
             nextHeaderCell("Day");
@@ -639,7 +633,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 .collect(groupingBy(MeetingAssignment::getMeeting, toList()));
             for (Meeting meeting : solution.getMeetingList()) {
                 nextRow();
-                nextCell().setCellValue(meeting.getTopic());
                 nextCell().setCellValue(meeting.isEntireGroupMeeting() ? "Y" : "");
                 nextCell().setCellValue(
                     meeting.getDurationInGrains() * TimeGrain.GRAIN_LENGTH_IN_MINUTES);
@@ -647,7 +640,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                     : meeting.getSpeakerList().stream()
                         .map(Person::getFullName)
                         .collect(joining(", ")));
-                nextCell().setCellValue(meeting.getContent() == null ? "" : meeting.getContent());
                 nextCell().setCellValue(
                     meeting.getRequiredAttendanceList().stream()
                         .map(requiredAttendance -> requiredAttendance.getPerson().getFullName())
@@ -854,8 +846,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                             solution.getTimeGrainList().get(lastTimeGrainIndex)
                                 .getStartingMinuteOfDay()
                                 + TimeGrain.GRAIN_LENGTH_IN_MINUTES);
-                        meetingInfo.append(
-                            StringUtils.abbreviate(meetingAssignment.getMeeting().getTopic(), 150))
+                        meetingInfo
                             .append("\n  ")
                             .append(meetingAssignment.getMeeting().getSpeakerList().stream()
                                 .map(Person::getFullName)
@@ -919,8 +910,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                                 currentColumnNumber));
                     }
                     nextMeetingAssignmentListCell(timeGrainMeetingAssignmentList,
-                        meetingAssignment -> meetingAssignment.getMeeting().getTopic() + "\n  "
-                            + meetingAssignment.getMeeting().getSpeakerList().stream()
+                        meetingAssignment -> meetingAssignment.getMeeting().getSpeakerList().stream()
                             .map(Person::getFullName)
                             .collect(joining(", ")),
                         Arrays.asList(filteredConstraintNames));

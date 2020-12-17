@@ -108,7 +108,7 @@ public class MeetingAssignment extends AbstractPersistable {
 
     public String getLabel() {
         int wrapLength = Math.max(8 * meeting.getDurationInGrains(), 16);
-        return "<html><center>" + WordUtils.wrap(meeting.getTopic(), wrapLength, "<br/>", false)
+        return "<html><center>" + WordUtils.wrap(meeting.toString(), wrapLength, "<br/>", false)
             + "</center></html>";
     }
 
