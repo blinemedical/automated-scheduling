@@ -4,7 +4,6 @@ import java.util.List;
 
 public class Meeting extends AbstractPersistable {
 
-    private List<Person> speakerList;
     private boolean entireGroupMeeting;
     /**
      * Multiply by {@link TimeGrain#GRAIN_LENGTH_IN_MINUTES} to get duration in minutes.
@@ -12,14 +11,6 @@ public class Meeting extends AbstractPersistable {
     private int durationInGrains;
 
     private List<Attendance> requiredAttendanceList;
-
-    public List<Person> getSpeakerList() {
-        return speakerList;
-    }
-
-    public void setSpeakerList(List<Person> speakerList) {
-        this.speakerList = speakerList;
-    }
 
     public boolean isEntireGroupMeeting() {
         return entireGroupMeeting;
