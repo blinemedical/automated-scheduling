@@ -30,6 +30,8 @@ public class MeetingSchedule extends AbstractPersistable {
     private List<Person> personList;
     @ProblemFactCollectionProperty
     private List<Attendance> attendanceList;
+    @ProblemFactCollectionProperty
+    private List<Scenario> scenarioList;
 
     @PlanningEntityCollectionProperty
     private List<MeetingAssignment> meetingAssignmentList;
@@ -91,6 +93,14 @@ public class MeetingSchedule extends AbstractPersistable {
 
     public void setAttendanceList(List<Attendance> attendanceList) {
         this.attendanceList = attendanceList;
+    }
+
+    public List<Scenario> getScenarioList() {
+        return scenarioList;
+    }
+
+    public void setScenarioList(List<Scenario> scenarioList) {
+        this.scenarioList = scenarioList;
     }
 
     public List<MeetingAssignment> getMeetingAssignmentList() {
