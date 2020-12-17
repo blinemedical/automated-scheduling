@@ -1,7 +1,13 @@
 package org.blinemedical.examination.persistence;
 
+import static org.blinemedical.examination.domain.TimeGrain.GRAIN_LENGTH_IN_MINUTES;
+
 import java.io.File;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,61 +34,18 @@ public class MeetingSchedulingGenerator {
 
     public static void main(String[] args) {
         MeetingSchedulingGenerator generator = new MeetingSchedulingGenerator();
-        generator.writeMeetingSchedule(50, 5, 4);
-        generator.writeMeetingSchedule(100, 5, 4);
-        generator.writeMeetingSchedule(200, 5, 4);
-        generator.writeMeetingSchedule(400, 5, 4);
-        generator.writeMeetingSchedule(800, 5, 4);
+
+        Instant startTime = Instant.parse("2020-12-18T08:00:00.00Z");
+        Instant endTime = Instant.parse("2020-12-18T16:00:00.00Z");
+        Duration meetingDuration = Duration.ofHours(1L);
+        int meetingDurationInGrains = (int) (meetingDuration.toMinutes() / GRAIN_LENGTH_IN_MINUTES);
+
+        generator.writeMeetingSchedule(50, 5, startTime, endTime, meetingDurationInGrains);
+        generator.writeMeetingSchedule(100, 5, startTime, endTime, meetingDurationInGrains);
+        generator.writeMeetingSchedule(200, 5, startTime, endTime, meetingDurationInGrains);
+        generator.writeMeetingSchedule(400, 5, startTime, endTime, meetingDurationInGrains);
+        generator.writeMeetingSchedule(800, 5, startTime, endTime, meetingDurationInGrains);
     }
-
-    private final int[] durationInGrainsOptions = {
-        1, // 15 mins
-        2, // 30 mins
-        3, // 45 mins
-        4, // 1 hour
-        6, // 90 mins
-        8, // 2 hours
-        16, // 4 hours
-    };
-
-    private final int[] startingMinuteOfDayOptions = {
-        8 * 60, // 08:00
-        8 * 60 + 15, // 08:15
-        8 * 60 + 30, // 08:30
-        8 * 60 + 45, // 08:45
-        9 * 60, // 09:00
-        9 * 60 + 15, // 09:15
-        9 * 60 + 30, // 09:30
-        9 * 60 + 45, // 09:45
-        10 * 60, // 10:00
-        10 * 60 + 15, // 10:15
-        10 * 60 + 30, // 10:30
-        10 * 60 + 45, // 10:45
-        11 * 60, // 11:00
-        11 * 60 + 15, // 11:15
-        11 * 60 + 30, // 11:30
-        11 * 60 + 45, // 11:45
-        13 * 60, // 13:00
-        13 * 60 + 15, // 13:15
-        13 * 60 + 30, // 13:30
-        13 * 60 + 45, // 13:45
-        14 * 60, // 14:00
-        14 * 60 + 15, // 14:15
-        14 * 60 + 30, // 14:30
-        14 * 60 + 45, // 14:45
-        15 * 60, // 15:00
-        15 * 60 + 15, // 15:15
-        15 * 60 + 30, // 15:30
-        15 * 60 + 45, // 15:45
-        16 * 60, // 16:00
-        16 * 60 + 15, // 16:15
-        16 * 60 + 30, // 16:30
-        16 * 60 + 45, // 16:45
-        17 * 60, // 17:00
-        17 * 60 + 15, // 17:15
-        17 * 60 + 30, // 17:30
-        17 * 60 + 45, // 17:45
-    };
 
     private final StringDataGenerator fullNameGenerator = StringDataGenerator.buildFullNames();
 
@@ -96,15 +59,17 @@ public class MeetingSchedulingGenerator {
         outputDir = new File(CommonApp.determineDataDir(ExaminationApp.DATA_DIR_NAME), "unsolved");
     }
 
-    private void writeMeetingSchedule(int meetingListSize, int roomListSize, int durationInGrains) {
-        int timeGrainListSize =
-            meetingListSize * durationInGrainsOptions[durationInGrainsOptions.length - 1]
-                / roomListSize;
+    private void writeMeetingSchedule(int meetingListSize, int roomListSize, Instant startTime,
+        Instant endTime, int durationInGrains) {
+        Duration meetingDuration = Duration.between(startTime, endTime);
+        int timeGrainListSize = (int) meetingDuration.dividedBy(GRAIN_LENGTH_IN_MINUTES)
+            .toMinutes();
+
         String fileName = determineFileName(meetingListSize, timeGrainListSize, roomListSize);
         File outputFile = new File(outputDir,
             fileName + "." + solutionFileIO.getOutputFileExtension());
         MeetingSchedule meetingSchedule = createMeetingSchedule(fileName, meetingListSize,
-            timeGrainListSize, roomListSize, durationInGrains);
+            startTime, timeGrainListSize, roomListSize, durationInGrains);
         solutionFileIO.write(meetingSchedule, outputFile);
         logger.info("Saved: {}", outputFile);
     }
@@ -115,7 +80,7 @@ public class MeetingSchedulingGenerator {
     }
 
     public MeetingSchedule createMeetingSchedule(String fileName, int meetingListSize,
-        int timeGrainListSize,
+        Instant startTime, int timeGrainListSize,
         int roomListSize, int durationInGrains) {
         random = new Random(37);
         MeetingSchedule meetingSchedule = new MeetingSchedule();
@@ -125,7 +90,7 @@ public class MeetingSchedulingGenerator {
         meetingSchedule.setConstraintConfiguration(constraintConfiguration);
 
         createMeetingListAndAttendanceList(meetingSchedule, meetingListSize, durationInGrains);
-        createTimeGrainList(meetingSchedule, timeGrainListSize);
+        createTimeGrainList(meetingSchedule, startTime, timeGrainListSize);
         createRoomList(meetingSchedule, roomListSize);
         createPersonList(meetingSchedule);
         linkAttendanceListToPersons(meetingSchedule);
@@ -180,11 +145,14 @@ public class MeetingSchedulingGenerator {
         meetingSchedule.setAttendanceList(globalAttendanceList);
     }
 
-    private void createTimeGrainList(MeetingSchedule meetingSchedule, int timeGrainListSize) {
+    private void createTimeGrainList(MeetingSchedule meetingSchedule, Instant startTime,
+        int timeGrainListSize) {
         List<Day> dayList = new ArrayList<>(timeGrainListSize);
         long dayId = 0;
         Day day = null;
         List<TimeGrain> timeGrainList = new ArrayList<>(timeGrainListSize);
+        int[] startingMinuteOfDayOptions = getStartingMinuteOfDayOptions(startTime,
+            timeGrainListSize);
         for (int i = 0; i < timeGrainListSize; i++) {
             TimeGrain timeGrain = new TimeGrain();
             timeGrain.setId((long) i);
@@ -208,6 +176,20 @@ public class MeetingSchedulingGenerator {
         }
         meetingSchedule.setDayList(dayList);
         meetingSchedule.setTimeGrainList(timeGrainList);
+    }
+
+    private int[] getStartingMinuteOfDayOptions(Instant startTime, int timeGrainListSize) {
+        int[] options = new int[timeGrainListSize];
+
+        for (int i = 0; i < timeGrainListSize; i++) {
+            Instant startingTimeOption = startTime.plus(Duration.ofMinutes(
+                (long) GRAIN_LENGTH_IN_MINUTES * i));
+            ZonedDateTime zonedStartingTimeOption = startingTimeOption.atZone(ZoneOffset.UTC);
+            options[i] =
+                zonedStartingTimeOption.getHour() * 60 + zonedStartingTimeOption.getMinute();
+        }
+
+        return options;
     }
 
     private void createRoomList(MeetingSchedule meetingSchedule, int roomListSize) {
