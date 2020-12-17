@@ -25,8 +25,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import org.apache.commons.lang3.tuple.Pair;
-import org.blinemedical.examination.domain.Attendance;
 import org.blinemedical.examination.domain.Day;
+import org.blinemedical.examination.domain.Meeting;
 import org.blinemedical.examination.domain.MeetingAssignment;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
@@ -187,13 +187,22 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             roomsPanel.addCell(startingTimeGrain, meetingAssignment.getRoom(),
                 lastTimeGrain, meetingAssignment.getRoom(),
                 createButton(meetingAssignment, color));
-            for (Attendance requiredAttendance : meetingAssignment.getMeeting()
-                .getRequiredAttendanceList()) {
-                Pair<Person, Boolean> pair = Pair.of(requiredAttendance.getPerson(), Boolean.TRUE);
-                personsPanel.addCell(startingTimeGrain, pair,
-                    lastTimeGrain, pair,
-                    createButton(meetingAssignment, color));
-            }
+
+            Pair<Person, Boolean> learnerPair = Pair.of(
+                meetingAssignment.getMeeting().getRequiredLearner().getPerson(),
+                Boolean.TRUE);
+            personsPanel.addCell(
+                startingTimeGrain, learnerPair,
+                lastTimeGrain, learnerPair,
+                createButton(meetingAssignment, color));
+
+            Pair<Person, Boolean> patientPair = Pair.of(
+                meetingAssignment.getMeeting().getRequiredPatient().getPerson(),
+                Boolean.TRUE);
+            personsPanel.addCell(
+                startingTimeGrain, patientPair,
+                lastTimeGrain, patientPair,
+                createButton(meetingAssignment, color));
         }
     }
 
@@ -218,12 +227,18 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
 
     private class MeetingAssignmentAction extends AbstractAction {
 
-        private MeetingAssignment meetingAssignment;
+        private final MeetingAssignment meetingAssignment;
 
         public MeetingAssignmentAction(MeetingAssignment meetingAssignment) {
             super(meetingAssignment.getLabel());
+            Meeting meeting = meetingAssignment.getMeeting();
+            String learnerFullName = meeting.getRequiredLearner().getPerson().getFullName();
+            String PatientFullName = meeting.getRequiredPatient().getPerson().getFullName();
             putValue(SHORT_DESCRIPTION,
-                "<html>Date and time: " + defaultIfNull(
+                "<html>"
+                    + "Learner: " + learnerFullName + "<br/>"
+                    + "Patient: " + PatientFullName + "<br/>"
+                    + "Date and time: " + defaultIfNull(
                     meetingAssignment.getStartingDateTimeString(), "unassigned") + "<br/>"
                     + "Duration: " + meetingAssignment.getMeeting().getDurationString() + "<br/>"
                     + "Room: " + defaultIfNull(meetingAssignment.getRoom(), "unassigned")

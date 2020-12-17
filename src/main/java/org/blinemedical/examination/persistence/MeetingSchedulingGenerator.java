@@ -154,24 +154,26 @@ public class MeetingSchedulingGenerator {
             meeting.setId((long) i);
             meeting.setDurationInGrains(durationInGrains);
 
-            int requiredAttendanceListSize = 2;
-            List<Attendance> requiredAttendanceList = new ArrayList<>(
-                requiredAttendanceListSize);
-            for (int j = 0; j < requiredAttendanceListSize; j++) {
-                Attendance attendance = new Attendance();
-                attendance.setId(attendanceId);
-                attendanceId++;
-                attendance.setMeeting(meeting);
-                // person is filled in later
-                requiredAttendanceList.add(attendance);
-                globalAttendanceList.add(attendance);
-            }
-            meeting.setRequiredAttendanceList(requiredAttendanceList);
+            Attendance learner = new Attendance();
+            learner.setId(attendanceId);
+            attendanceId++;
+            learner.setMeeting(meeting);
+            // person is filled in later
+            globalAttendanceList.add(learner);
+            meeting.setRequiredLearner(learner);
+
+            Attendance patient = new Attendance();
+            patient.setId(attendanceId);
+            attendanceId++;
+            patient.setMeeting(meeting);
+            // person is filled in later
+            globalAttendanceList.add(patient);
+            meeting.setRequiredPatient(patient);
 
             logger.trace("Created meeting with durationInGrains ({}),"
                     + " requiredAttendanceListSize ({}).",
                 durationInGrains,
-                requiredAttendanceListSize);
+                2);
             meetingList.add(meeting);
         }
         meetingSchedule.setMeetingList(meetingList);
@@ -225,10 +227,7 @@ public class MeetingSchedulingGenerator {
     }
 
     private void createPersonList(MeetingSchedule meetingSchedule) {
-        int attendanceListSize = 0;
-        for (Meeting meeting : meetingSchedule.getMeetingList()) {
-            attendanceListSize += meeting.getRequiredAttendanceList().size();
-        }
+        int attendanceListSize = meetingSchedule.getMeetingList().size() * 2;
         int personListSize = attendanceListSize * meetingSchedule.getRoomList().size() * 3
             / (4 * meetingSchedule.getMeetingList().size());
         List<Person> personList = new ArrayList<>(personListSize);
@@ -248,16 +247,18 @@ public class MeetingSchedulingGenerator {
     private void linkAttendanceListToPersons(MeetingSchedule meetingSchedule) {
         for (Meeting meeting : meetingSchedule.getMeetingList()) {
             List<Person> availablePersonList = new ArrayList<>(meetingSchedule.getPersonList());
-            int attendanceListSize = meeting.getRequiredAttendanceList().size();
+            int attendanceListSize = 2;
             if (availablePersonList.size() < attendanceListSize) {
                 throw new IllegalStateException(
                     "The availablePersonList size (" + availablePersonList.size()
                         + ") is less than the attendanceListSize (" + attendanceListSize + ").");
             }
-            for (Attendance requiredAttendance : meeting.getRequiredAttendanceList()) {
-                requiredAttendance.setPerson(
-                    availablePersonList.remove(random.nextInt(availablePersonList.size())));
-            }
+
+            meeting.getRequiredLearner().setPerson(
+                availablePersonList.remove(random.nextInt(availablePersonList.size())));
+            meeting.getRequiredPatient().setPerson(
+                availablePersonList.remove(random.nextInt(availablePersonList.size())));
+
         }
     }
 

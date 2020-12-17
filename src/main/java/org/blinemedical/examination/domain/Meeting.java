@@ -1,7 +1,5 @@
 package org.blinemedical.examination.domain;
 
-import java.util.List;
-
 public class Meeting extends AbstractPersistable {
 
     /**
@@ -9,7 +7,8 @@ public class Meeting extends AbstractPersistable {
      */
     private int durationInGrains;
 
-    private List<Attendance> requiredAttendanceList;
+    private Attendance requiredLearner;
+    private Attendance requiredPatient;
 
     public int getDurationInGrains() {
         return durationInGrains;
@@ -19,12 +18,20 @@ public class Meeting extends AbstractPersistable {
         this.durationInGrains = durationInGrains;
     }
 
-    public List<Attendance> getRequiredAttendanceList() {
-        return requiredAttendanceList;
+    public Attendance getRequiredLearner() {
+        return requiredLearner;
     }
 
-    public void setRequiredAttendanceList(List<Attendance> requiredAttendanceList) {
-        this.requiredAttendanceList = requiredAttendanceList;
+    public void setRequiredLearner(Attendance requiredLearner) {
+        this.requiredLearner = requiredLearner;
+    }
+
+    public Attendance getRequiredPatient() {
+        return requiredPatient;
+    }
+
+    public void setRequiredPatient(Attendance requiredPatient) {
+        this.requiredPatient = requiredPatient;
     }
 
     // ************************************************************************
@@ -32,7 +39,7 @@ public class Meeting extends AbstractPersistable {
     // ************************************************************************
 
     public int getRequiredCapacity() {
-        return requiredAttendanceList.size();
+        return 2;
     }
 
     public String getDurationString() {

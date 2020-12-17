@@ -167,7 +167,8 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextSheet("Meetings");
             nextRow(false);
             readHeaderCell("Duration");
-            readHeaderCell("Required attendance list");
+            readHeaderCell("Required Learner");
+            readHeaderCell("Required Patient");
             readHeaderCell("Day");
             readHeaderCell("Starting time");
             readHeaderCell("Room");
@@ -229,42 +230,38 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             List<Attendance> attendanceList = new ArrayList<>(currentSheet.getLastRowNum() - 1);
             Set<Person> requiredPersonSet = new HashSet<>();
 
-            List<Attendance> requiredAttendanceList = getRequiredAttendanceList(meeting,
-                personMap,
-                requiredPersonSet);
-            for (Attendance requiredAttendance : requiredAttendanceList) {
-                requiredAttendance.setId(attendanceId++);
-            }
-            meeting.setRequiredAttendanceList(requiredAttendanceList);
-            attendanceList.addAll(requiredAttendanceList);
+            Attendance requiredLearner = getRequiredAttendee(meeting, personMap, requiredPersonSet);
+            requiredLearner.setId(attendanceId++);
+            Attendance requiredPatient = getRequiredAttendee(meeting, personMap, requiredPersonSet);
+            requiredPatient.setId(attendanceId++);
+
+            meeting.setRequiredLearner(requiredLearner);
+            meeting.setRequiredPatient(requiredPatient);
+            attendanceList.add(requiredLearner);
+            attendanceList.add(requiredPatient);
 
             return attendanceList;
         }
 
-        private List<Attendance> getRequiredAttendanceList(Meeting meeting,
-            Map<String, Person> personMap, Set<Person> requiredPersonSet) {
-            return Arrays.stream(nextStringCell().getStringCellValue().split(", "))
-                .filter(requiredAttendee -> !requiredAttendee.isEmpty())
-                .map(personName -> {
-                    Attendance requiredAttendance = new Attendance();
-                    Person person = personMap.get(personName);
-                    if (person == null) {
-                        throw new IllegalStateException(
-                            currentPosition() + ": The meeting with id (" + meeting.getId()
-                                + ") has a required attendee (" + personName
-                                + ") that doesn't exist in the Persons list.");
-                    }
-                    if (requiredPersonSet.contains(person)) {
-                        throw new IllegalStateException(
-                            currentPosition() + ": The meeting with id (" + meeting.getId()
-                                + ") has a duplicate required attendee (" + personName + ").");
-                    }
-                    requiredPersonSet.add(person);
-                    requiredAttendance.setMeeting(meeting);
-                    requiredAttendance.setPerson(person);
-                    return requiredAttendance;
-                })
-                .collect(toList());
+        private Attendance getRequiredAttendee(Meeting meeting, Map<String, Person> personMap, Set<Person> requiredPersonSet) {
+            String personName = nextStringCell().getStringCellValue();
+            Attendance requiredAttendance = new Attendance();
+            Person person = personMap.get(personName);
+            if (person == null) {
+                throw new IllegalStateException(
+                    currentPosition() + ": The meeting with id (" + meeting.getId()
+                        + ") has a required attendee (" + personName
+                        + ") that doesn't exist in the Persons list.");
+            }
+            if (requiredPersonSet.contains(person)) {
+                throw new IllegalStateException(
+                    currentPosition() + ": The meeting with id (" + meeting.getId()
+                        + ") has a duplicate required attendee (" + personName + ").");
+            }
+            requiredPersonSet.add(person);
+            requiredAttendance.setMeeting(meeting);
+            requiredAttendance.setPerson(person);
+            return requiredAttendance;
         }
 
         private TimeGrain extractTimeGrain(Meeting meeting,
@@ -488,7 +485,8 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextSheet("Meetings", 1, 1, false);
             nextRow();
             nextHeaderCell("Duration");
-            nextHeaderCell("Required attendance list");
+            nextHeaderCell("Required Learner");
+            nextHeaderCell("Required Patient");
             nextHeaderCell("Day");
             nextHeaderCell("Starting time");
             nextHeaderCell("Room");
@@ -499,10 +497,8 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 nextRow();
                 nextCell().setCellValue(
                     meeting.getDurationInGrains() * TimeGrain.GRAIN_LENGTH_IN_MINUTES);
-                nextCell().setCellValue(
-                    meeting.getRequiredAttendanceList().stream()
-                        .map(requiredAttendance -> requiredAttendance.getPerson().getFullName())
-                        .collect(joining(", ")));
+                nextCell().setCellValue(meeting.getRequiredLearner().getPerson().getFullName());
+                nextCell().setCellValue(meeting.getRequiredPatient().getPerson().getFullName());
                 List<MeetingAssignment> meetingAssignmentList = meetingAssignmentMap.get(meeting);
                 if (meetingAssignmentList.size() != 1) {
                     throw new IllegalStateException("Impossible state: the meeting (" + meeting
