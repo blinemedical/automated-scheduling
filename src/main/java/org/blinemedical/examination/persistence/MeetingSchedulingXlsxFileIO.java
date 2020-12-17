@@ -166,7 +166,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 toMap(Person::getFullName, person -> person));
             nextSheet("Meetings");
             nextRow(false);
-            readHeaderCell("Group");
             readHeaderCell("Duration");
             readHeaderCell("Required attendance list");
             readHeaderCell("Day");
@@ -190,28 +189,13 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 meeting.setId(meetingId++);
                 meetingAssignment.setId(meetingAssignmentId++);
 
-                meeting.setEntireGroupMeeting(
-                    nextStringCell().getStringCellValue().equalsIgnoreCase("y"));
                 readMeetingDuration(meeting);
 
-                if (meeting.isEntireGroupMeeting()) {
-                    List<Attendance> requiredAttendanceList = new ArrayList<>(
-                        solution.getPersonList().size());
-                    for (Person person : solution.getPersonList()) {
-                        Attendance requiredAttendance = new Attendance();
-                        requiredAttendance.setPerson(person);
-                        requiredAttendance.setMeeting(meeting);
-                        requiredAttendance.setId(attendanceId++);
-                        requiredAttendanceList.add(requiredAttendance);
-                        attendanceList.add(requiredAttendance);
-                    }
-                    meeting.setRequiredAttendanceList(requiredAttendanceList);
-                } else {
-                    List<Attendance> meetingAttendanceList = getAttendanceLists(meeting, personMap,
-                        attendanceId);
-                    attendanceId += meetingAttendanceList.size();
-                    attendanceList.addAll(meetingAttendanceList);
-                }
+                List<Attendance> meetingAttendanceList = getAttendanceLists(meeting, personMap,
+                    attendanceId);
+                attendanceId += meetingAttendanceList.size();
+                attendanceList.addAll(meetingAttendanceList);
+
                 meetingAssignment.setStartingTimeGrain(extractTimeGrain(meeting, timeGrainMap));
                 meetingAssignment.setRoom(extractRoom(meeting, roomMap));
                 meetingList.add(meeting);
@@ -503,7 +487,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
         private void writeMeetings() {
             nextSheet("Meetings", 1, 1, false);
             nextRow();
-            nextHeaderCell("Group");
             nextHeaderCell("Duration");
             nextHeaderCell("Required attendance list");
             nextHeaderCell("Day");
@@ -514,7 +497,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 .collect(groupingBy(MeetingAssignment::getMeeting, toList()));
             for (Meeting meeting : solution.getMeetingList()) {
                 nextRow();
-                nextCell().setCellValue(meeting.isEntireGroupMeeting() ? "Y" : "");
                 nextCell().setCellValue(
                     meeting.getDurationInGrains() * TimeGrain.GRAIN_LENGTH_IN_MINUTES);
                 nextCell().setCellValue(
@@ -629,9 +611,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextHeaderCell(person.getFullName());
 
             List<Meeting> personMeetingList = solution.getAttendanceList().stream()
-                    .filter(attendance -> attendance.getPerson().equals(person))
-                    .map(Attendance::getMeeting)
-                    .collect(toList());
+                .filter(attendance -> attendance.getPerson().equals(person))
+                .map(Attendance::getMeeting)
+                .collect(toList());
 
             List<MeetingAssignment> personMeetingAssignmentList = solution
                 .getMeetingAssignmentList().stream()
