@@ -11,8 +11,7 @@ public class Meeting extends AbstractPersistable {
      */
     private int durationInGrains;
 
-    private List<RequiredAttendance> requiredAttendanceList;
-    private List<PreferredAttendance> preferredAttendanceList;
+    private List<Attendance> requiredAttendanceList;
 
     public List<Person> getSpeakerList() {
         return speakerList;
@@ -38,20 +37,12 @@ public class Meeting extends AbstractPersistable {
         this.durationInGrains = durationInGrains;
     }
 
-    public List<RequiredAttendance> getRequiredAttendanceList() {
+    public List<Attendance> getRequiredAttendanceList() {
         return requiredAttendanceList;
     }
 
-    public void setRequiredAttendanceList(List<RequiredAttendance> requiredAttendanceList) {
+    public void setRequiredAttendanceList(List<Attendance> requiredAttendanceList) {
         this.requiredAttendanceList = requiredAttendanceList;
-    }
-
-    public List<PreferredAttendance> getPreferredAttendanceList() {
-        return preferredAttendanceList;
-    }
-
-    public void setPreferredAttendanceList(List<PreferredAttendance> preferredAttendanceList) {
-        this.preferredAttendanceList = preferredAttendanceList;
     }
 
     // ************************************************************************
@@ -59,7 +50,7 @@ public class Meeting extends AbstractPersistable {
     // ************************************************************************
 
     public int getRequiredCapacity() {
-        return requiredAttendanceList.size() + preferredAttendanceList.size();
+        return requiredAttendanceList.size();
     }
 
     public String getDurationString() {

@@ -2,7 +2,7 @@ package org.blinemedical.examination.domain;
 
 import org.optaplanner.examples.common.domain.AbstractPersistable;
 
-public abstract class Attendance extends AbstractPersistable {
+public class Attendance extends AbstractPersistable {
 
     private Person person;
     private Meeting meeting;

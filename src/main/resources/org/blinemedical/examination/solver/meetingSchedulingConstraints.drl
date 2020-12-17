@@ -8,8 +8,6 @@ import org.blinemedical.examination.domain.Meeting;
 import org.blinemedical.examination.domain.MeetingAssignment;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
-import org.blinemedical.examination.domain.PreferredAttendance;
-import org.blinemedical.examination.domain.RequiredAttendance;
 import org.blinemedical.examination.domain.Room;
 import org.blinemedical.examination.domain.TimeGrain;
 
@@ -39,8 +37,8 @@ end
 
 rule "Required attendance conflict"
     when
-        RequiredAttendance($leftId : id, $person : person, $leftMeeting : meeting)
-        RequiredAttendance(person == $person, $rightMeeting : meeting, id > $leftId)
+        Attendance($leftId : id, $person : person, $leftMeeting : meeting)
+        Attendance(person == $person, $rightMeeting : meeting, id > $leftId)
         $leftAssignment : MeetingAssignment(meeting == $leftMeeting, startingTimeGrain != null)
         $rightAssignment : MeetingAssignment(meeting == $rightMeeting, calculateOverlap($leftAssignment) > 0)
     then
@@ -59,32 +57,6 @@ rule "Start and end on same day"
         MeetingAssignment(startingTimeGrain != null, $firstTimeGrain : startingTimeGrain, $lastTimeGrainIndex : getLastTimeGrainIndex())
         $lastTimeGrain : TimeGrain(grainIndex == $lastTimeGrainIndex, $firstTimeGrain.getDay() != getDay())
     then
-        scoreHolder.penalize(kcontext);
-end
-
-// ############################################################################
-// Medium constraints usually
-// ############################################################################
-
-rule "Required and preferred attendance conflict"
-    when
-        RequiredAttendance($person : person, $leftMeeting : meeting)
-        PreferredAttendance(person == $person, $rightMeeting : meeting)
-        $leftAssignment : MeetingAssignment(meeting == $leftMeeting, startingTimeGrain != null)
-        $rightAssignment : MeetingAssignment(meeting == $rightMeeting, calculateOverlap($leftAssignment) > 0)
-    then
-        // Fairness not implemented (see tennis example)
-        scoreHolder.penalize(kcontext);
-end
-
-rule "Preferred attendance conflict"
-    when
-        PreferredAttendance($leftId : id, $person : person, $leftMeeting : meeting)
-        PreferredAttendance(person == $person, $rightMeeting : meeting, id > $leftId)
-        $leftAssignment : MeetingAssignment(meeting == $leftMeeting, startingTimeGrain != null)
-        $rightAssignment : MeetingAssignment(meeting == $rightMeeting, calculateOverlap($leftAssignment) > 0)
-    then
-        // Fairness not implemented (see tennis example)
         scoreHolder.penalize(kcontext);
 end
 

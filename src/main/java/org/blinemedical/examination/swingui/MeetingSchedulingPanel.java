@@ -25,12 +25,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import org.apache.commons.lang3.tuple.Pair;
+import org.blinemedical.examination.domain.Attendance;
 import org.blinemedical.examination.domain.Day;
 import org.blinemedical.examination.domain.MeetingAssignment;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
-import org.blinemedical.examination.domain.PreferredAttendance;
-import org.blinemedical.examination.domain.RequiredAttendance;
 import org.blinemedical.examination.domain.Room;
 import org.blinemedical.examination.domain.TimeGrain;
 import org.optaplanner.examples.common.swingui.CommonIcons;
@@ -76,7 +75,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
     private void defineGrid(MeetingSchedule meetingSchedule) {
         roomsPanel.defineColumnHeaderByKey(HEADER_COLUMN); // Room header
         personsPanel.defineColumnHeaderByKey(HEADER_COLUMN_GROUP1); // Person header
-        personsPanel.defineColumnHeaderByKey(HEADER_COLUMN); // Required header
         for (TimeGrain timeGrain : meetingSchedule.getTimeGrainList()) {
             roomsPanel.defineColumnHeader(timeGrain);
             personsPanel.defineColumnHeader(timeGrain);
@@ -97,7 +95,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         personsPanel.defineRowHeaderByKey(HEADER_ROW); // TimeGrain header
         for (Person person : meetingSchedule.getPersonList()) {
             personsPanel.defineRowHeader(Pair.of(person, Boolean.TRUE));
-            personsPanel.defineRowHeader(Pair.of(person, Boolean.FALSE));
         }
     }
 
@@ -107,8 +104,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         fillRoomCells(meetingSchedule);
         personsPanel.addCornerHeader(HEADER_COLUMN_GROUP1, HEADER_ROW,
             createTableHeader(new JLabel("Person")));
-        personsPanel.addCornerHeader(HEADER_COLUMN, HEADER_ROW,
-            createTableHeader(new JLabel("Attendance")));
         fillPersonCells(meetingSchedule);
         fillTimeGrainCells(meetingSchedule);
         fillMeetingAssignmentCells(meetingSchedule);
@@ -126,12 +121,7 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
     private void fillPersonCells(MeetingSchedule meetingSchedule) {
         for (Person person : meetingSchedule.getPersonList()) {
             personsPanel.addRowHeader(HEADER_COLUMN_GROUP1, Pair.of(person, Boolean.TRUE),
-                HEADER_COLUMN_GROUP1, Pair.of(person, Boolean.FALSE),
                 createTableHeader(new JLabel(person.getLabel(), SwingConstants.CENTER)));
-            personsPanel.addRowHeader(HEADER_COLUMN, Pair.of(person, Boolean.TRUE),
-                createTableHeader(new JLabel("Required", SwingConstants.CENTER)));
-            personsPanel.addRowHeader(HEADER_COLUMN, Pair.of(person, Boolean.FALSE),
-                createTableHeader(new JLabel("Preferred", SwingConstants.CENTER)));
         }
     }
 
@@ -197,17 +187,9 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             roomsPanel.addCell(startingTimeGrain, meetingAssignment.getRoom(),
                 lastTimeGrain, meetingAssignment.getRoom(),
                 createButton(meetingAssignment, color));
-            for (RequiredAttendance requiredAttendance : meetingAssignment.getMeeting()
+            for (Attendance requiredAttendance : meetingAssignment.getMeeting()
                 .getRequiredAttendanceList()) {
                 Pair<Person, Boolean> pair = Pair.of(requiredAttendance.getPerson(), Boolean.TRUE);
-                personsPanel.addCell(startingTimeGrain, pair,
-                    lastTimeGrain, pair,
-                    createButton(meetingAssignment, color));
-            }
-            for (PreferredAttendance preferredAttendance : meetingAssignment.getMeeting()
-                .getPreferredAttendanceList()) {
-                Pair<Person, Boolean> pair = Pair
-                    .of(preferredAttendance.getPerson(), Boolean.FALSE);
                 personsPanel.addCell(startingTimeGrain, pair,
                     lastTimeGrain, pair,
                     createButton(meetingAssignment, color));

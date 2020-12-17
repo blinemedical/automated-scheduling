@@ -14,9 +14,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public static final String REQUIRED_ROOM_CAPACITY = "Required room capacity";
     public static final String START_AND_END_ON_SAME_DAY = "Start and end on same day";
 
-    public static final String REQUIRED_AND_PREFERRED_ATTENDANCE_CONFLICT = "Required and preferred attendance conflict";
-    public static final String PREFERRED_ATTENDANCE_CONFLICT = "Preferred attendance conflict";
-
     public static final String DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE = "Do all meetings as soon as possible";
     public static final String ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS =
         "One TimeGrain break between two consecutive meetings";
@@ -34,12 +31,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     private HardMediumSoftScore requiredRoomCapacity = HardMediumSoftScore.ofHard(1);
     @ConstraintWeight(START_AND_END_ON_SAME_DAY)
     private HardMediumSoftScore startAndEndOnSameDay = HardMediumSoftScore.ofHard(1);
-
-    @ConstraintWeight(REQUIRED_AND_PREFERRED_ATTENDANCE_CONFLICT)
-    private HardMediumSoftScore requiredAndPreferredAttendanceConflict = HardMediumSoftScore
-        .ofMedium(1);
-    @ConstraintWeight(PREFERRED_ATTENDANCE_CONFLICT)
-    private HardMediumSoftScore preferredAttendanceConflict = HardMediumSoftScore.ofMedium(1);
 
     @ConstraintWeight(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE)
     private HardMediumSoftScore doAllMeetingsAsSoonAsPossible = HardMediumSoftScore.ofSoft(1);
@@ -102,23 +93,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
 
     public void setStartAndEndOnSameDay(HardMediumSoftScore startAndEndOnSameDay) {
         this.startAndEndOnSameDay = startAndEndOnSameDay;
-    }
-
-    public HardMediumSoftScore getRequiredAndPreferredAttendanceConflict() {
-        return requiredAndPreferredAttendanceConflict;
-    }
-
-    public void setRequiredAndPreferredAttendanceConflict(
-        HardMediumSoftScore requiredAndPreferredAttendanceConflict) {
-        this.requiredAndPreferredAttendanceConflict = requiredAndPreferredAttendanceConflict;
-    }
-
-    public HardMediumSoftScore getPreferredAttendanceConflict() {
-        return preferredAttendanceConflict;
-    }
-
-    public void setPreferredAttendanceConflict(HardMediumSoftScore preferredAttendanceConflict) {
-        this.preferredAttendanceConflict = preferredAttendanceConflict;
     }
 
     public HardMediumSoftScore getDoAllMeetingsAsSoonAsPossible() {
