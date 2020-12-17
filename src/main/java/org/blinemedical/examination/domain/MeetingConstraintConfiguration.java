@@ -18,7 +18,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public static final String ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS =
         "One TimeGrain break between two consecutive meetings";
     public static final String OVERLAPPING_MEETINGS = "Overlapping meetings";
-    public static final String ASSIGN_LARGER_ROOMS_FIRST = "Assign larger rooms first";
     public static final String ROOM_STABILITY = "Room stability";
 
     // Hard
@@ -41,8 +40,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
         .ofSoft(100);
     @ConstraintWeight(OVERLAPPING_MEETINGS)
     private HardMediumSoftScore overlappingMeetings = HardMediumSoftScore.ofSoft(10);
-    @ConstraintWeight(ASSIGN_LARGER_ROOMS_FIRST)
-    private HardMediumSoftScore assignLargerRoomsFirst = HardMediumSoftScore.ofSoft(1);
     @ConstraintWeight(ROOM_STABILITY)
     private HardMediumSoftScore roomStability = HardMediumSoftScore.ofSoft(1);
 
@@ -113,14 +110,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
 
     public void setAssignedMeetings(HardMediumSoftScore assignedMeetings) {
         this.assignedMeetings = assignedMeetings;
-    }
-
-    public HardMediumSoftScore getAssignLargerRoomsFirst() {
-        return assignLargerRoomsFirst;
-    }
-
-    public void setAssignLargerRoomsFirst(HardMediumSoftScore assignLargerRoomsFirst) {
-        this.assignLargerRoomsFirst = assignLargerRoomsFirst;
     }
 
     public HardMediumSoftScore getRoomStability() {

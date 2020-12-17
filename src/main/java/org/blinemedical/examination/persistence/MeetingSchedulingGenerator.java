@@ -200,9 +200,7 @@ public class MeetingSchedulingGenerator {
             room.setId((long) i);
             String name = "Room-" + ((i / roomsPerFloor * 100) + (i % roomsPerFloor) + 1);
             room.setName(name);
-            int capacity = 2;
-            room.setCapacity(capacity);
-            logger.trace("Created room with name ({}), capacity ({}).", name, capacity);
+            logger.trace("Created room with name ({}).", name);
             roomList.add(room);
         }
         meetingSchedule.setRoomList(roomList);

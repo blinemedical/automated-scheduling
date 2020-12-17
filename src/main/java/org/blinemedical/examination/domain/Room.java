@@ -6,7 +6,6 @@ import org.optaplanner.examples.common.swingui.components.Labeled;
 public class Room extends AbstractPersistable implements Labeled {
 
     private String name;
-    private int capacity;
 
     public String getName() {
         return name;
@@ -14,14 +13,6 @@ public class Room extends AbstractPersistable implements Labeled {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
     }
 
     @Override

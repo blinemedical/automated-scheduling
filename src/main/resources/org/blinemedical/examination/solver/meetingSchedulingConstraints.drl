@@ -86,14 +86,6 @@ rule "Overlapping meetings"
         }
 end
 
-rule "Assign larger rooms first"
-    when
-        MeetingAssignment(room != null, $roomCapacity : room.getCapacity())
-        Room($roomCapacity < capacity, $otherRoomCapacity : capacity) // TODO BUG
-    then
-        scoreHolder.penalize(kcontext, $otherRoomCapacity - $roomCapacity);
-end
-
 rule "Room stability"
     when
         Attendance($person : person, $leftMeeting : meeting)

@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGN_LARGER_ROOMS_FIRST;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DONT_GO_IN_OVERTIME;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS;
@@ -128,9 +127,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             readIntConstraintParameterLine(OVERLAPPING_MEETINGS,
                 softScore -> constraintConfiguration
                     .setOverlappingMeetings(HardMediumSoftScore.ofSoft(softScore)), "");
-            readIntConstraintParameterLine(ASSIGN_LARGER_ROOMS_FIRST,
-                softScore -> constraintConfiguration
-                    .setAssignLargerRoomsFirst(HardMediumSoftScore.ofSoft(softScore)), "");
             readIntConstraintParameterLine(ROOM_STABILITY,
                 softScore -> constraintConfiguration
                     .setRoomStability(HardMediumSoftScore.ofSoft(softScore)), "");
@@ -359,7 +355,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextSheet("Rooms");
             nextRow();
             readHeaderCell("Name");
-            readHeaderCell("Capacity");
             List<Room> roomList = new ArrayList<>(currentSheet.getLastRowNum() - 1);
             long id = 0L;
             while (nextRow()) {
@@ -372,14 +367,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                             + ") must match to the regular expression (" + VALID_NAME_PATTERN
                             + ").");
                 }
-                double capacityDouble = nextNumericCell().getNumericCellValue();
-                if (capacityDouble <= 0 || capacityDouble != Math.floor(capacityDouble)) {
-                    throw new IllegalStateException(
-                        currentPosition() + ": The room with name (" + room.getName()
-                            + ") has a capacity (" + capacityDouble
-                            + ") that isn't a strictly positive integer number.");
-                }
-                room.setCapacity((int) capacityDouble);
                 roomList.add(room);
             }
             solution.setRoomList(roomList);
@@ -465,8 +452,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                     .getSoftScore(), "");
             writeIntConstraintParameterLine(OVERLAPPING_MEETINGS,
                 constraintConfiguration.getOverlappingMeetings().getSoftScore(), "");
-            writeIntConstraintParameterLine(ASSIGN_LARGER_ROOMS_FIRST,
-                constraintConfiguration.getAssignLargerRoomsFirst().getSoftScore(), "");
             writeIntConstraintParameterLine(ROOM_STABILITY,
                 constraintConfiguration.getRoomStability().getSoftScore(), "");
 
@@ -559,11 +544,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextSheet("Rooms", 1, 1, false);
             nextRow();
             nextHeaderCell("Name");
-            nextHeaderCell("Capacity");
             for (Room room : solution.getRoomList()) {
                 nextRow();
                 nextCell().setCellValue(room.getName());
-                nextCell().setCellValue(room.getCapacity());
             }
             autoSizeColumnsWithHeader();
         }
@@ -716,7 +699,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
                 OVERLAPPING_MEETINGS,
-                ASSIGN_LARGER_ROOMS_FIRST,
                 ROOM_STABILITY
             };
             int mergeStart = -1;
