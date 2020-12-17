@@ -63,12 +63,10 @@ import org.blinemedical.examination.domain.TimeGrain;
 import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import org.optaplanner.core.api.score.constraint.ConstraintMatch;
 import org.optaplanner.core.api.score.constraint.Indictment;
-import org.optaplanner.examples.common.persistence.AbstractXlsxSolutionFileIO.AbstractXlsxReader;
-import org.optaplanner.examples.common.persistence.AbstractXlsxSolutionFileIO.AbstractXlsxWriter;
+import org.optaplanner.examples.common.persistence.AbstractXlsxSolutionFileIO;
 import org.optaplanner.examples.meetingscheduling.app.MeetingSchedulingApp;
-import org.optaplanner.persistence.xstream.impl.domain.solution.XStreamSolutionFileIO;
 
-public class MeetingSchedulingXlsxFileIO extends XStreamSolutionFileIO<MeetingSchedule> {
+public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<MeetingSchedule> {
 
     @Override
     public MeetingSchedule read(
