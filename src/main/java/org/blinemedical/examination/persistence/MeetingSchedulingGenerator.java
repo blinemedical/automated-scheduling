@@ -28,58 +28,12 @@ public class MeetingSchedulingGenerator {
 
     public static void main(String[] args) {
         MeetingSchedulingGenerator generator = new MeetingSchedulingGenerator();
-        generator.writeMeetingSchedule(50, 5);
-        generator.writeMeetingSchedule(100, 5);
-        generator.writeMeetingSchedule(200, 5);
-        generator.writeMeetingSchedule(400, 5);
-        generator.writeMeetingSchedule(800, 5);
+        generator.writeMeetingSchedule(50, 5, 4);
+        generator.writeMeetingSchedule(100, 5, 4);
+        generator.writeMeetingSchedule(200, 5, 4);
+        generator.writeMeetingSchedule(400, 5, 4);
+        generator.writeMeetingSchedule(800, 5, 4);
     }
-
-    private final StringDataGenerator topicGenerator = new StringDataGenerator()
-        .addPart(true, 0,
-            "Strategize",
-            "Fast track",
-            "Cross sell",
-            "Profitize",
-            "Transform",
-            "Engage",
-            "Downsize",
-            "Ramp up",
-            "On board",
-            "Reinvigorate")
-        .addPart(false, 1,
-            "data driven",
-            "sales driven",
-            "compelling",
-            "reusable",
-            "negotiated",
-            "sustainable",
-            "laser-focused",
-            "flexible",
-            "real-time",
-            "targeted")
-        .addPart(true, 1,
-            "B2B",
-            "e-business",
-            "virtualization",
-            "multitasking",
-            "one stop shop",
-            "braindumps",
-            "data mining",
-            "policies",
-            "synergies",
-            "user experience")
-        .addPart(false, 3,
-            "in a nutshell",
-            "in practice",
-            "for dummies",
-            "in action",
-            "recipes",
-            "on the web",
-            "for decision makers",
-            "on the whiteboard",
-            "out of the box",
-            "in the new economy");
 
     private final int[] durationInGrainsOptions = {
         1, // 15 mins
@@ -89,21 +43,6 @@ public class MeetingSchedulingGenerator {
         6, // 90 mins
         8, // 2 hours
         16, // 4 hours
-    };
-
-    private final int[] personsPerMeetingOptions = {
-        2,
-        3,
-        4,
-        5,
-        6,
-        8,
-        10,
-        12,
-        14,
-        16,
-        20,
-        30,
     };
 
     private final int[] startingMinuteOfDayOptions = {
@@ -157,7 +96,7 @@ public class MeetingSchedulingGenerator {
         outputDir = new File(CommonApp.determineDataDir(ExaminationApp.DATA_DIR_NAME), "unsolved");
     }
 
-    private void writeMeetingSchedule(int meetingListSize, int roomListSize) {
+    private void writeMeetingSchedule(int meetingListSize, int roomListSize, int durationInGrains) {
         int timeGrainListSize =
             meetingListSize * durationInGrainsOptions[durationInGrainsOptions.length - 1]
                 / roomListSize;
@@ -165,7 +104,7 @@ public class MeetingSchedulingGenerator {
         File outputFile = new File(outputDir,
             fileName + "." + solutionFileIO.getOutputFileExtension());
         MeetingSchedule meetingSchedule = createMeetingSchedule(fileName, meetingListSize,
-            timeGrainListSize, roomListSize);
+            timeGrainListSize, roomListSize, durationInGrains);
         solutionFileIO.write(meetingSchedule, outputFile);
         logger.info("Saved: {}", outputFile);
     }
@@ -177,7 +116,7 @@ public class MeetingSchedulingGenerator {
 
     public MeetingSchedule createMeetingSchedule(String fileName, int meetingListSize,
         int timeGrainListSize,
-        int roomListSize) {
+        int roomListSize, int durationInGrains) {
         random = new Random(37);
         MeetingSchedule meetingSchedule = new MeetingSchedule();
         meetingSchedule.setId(0L);
@@ -185,7 +124,7 @@ public class MeetingSchedulingGenerator {
         constraintConfiguration.setId(0L);
         meetingSchedule.setConstraintConfiguration(constraintConfiguration);
 
-        createMeetingListAndAttendanceList(meetingSchedule, meetingListSize);
+        createMeetingListAndAttendanceList(meetingSchedule, meetingListSize, durationInGrains);
         createTimeGrainList(meetingSchedule, timeGrainListSize);
         createRoomList(meetingSchedule, roomListSize);
         createPersonList(meetingSchedule);
@@ -206,22 +145,16 @@ public class MeetingSchedulingGenerator {
     }
 
     private void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
-        int meetingListSize) {
+        int meetingListSize, int durationInGrains) {
         List<Meeting> meetingList = new ArrayList<>(meetingListSize);
         List<Attendance> globalAttendanceList = new ArrayList<>();
         long attendanceId = 0L;
-        topicGenerator.predictMaximumSizeAndReset(meetingListSize);
         for (int i = 0; i < meetingListSize; i++) {
             Meeting meeting = new Meeting();
             meeting.setId((long) i);
-            String topic = topicGenerator.generateNextValue();
-            int durationInGrains = durationInGrainsOptions[random
-                .nextInt(durationInGrainsOptions.length)];
             meeting.setDurationInGrains(durationInGrains);
 
-            int attendanceListSize = personsPerMeetingOptions[random
-                .nextInt(personsPerMeetingOptions.length)];
-            int requiredAttendanceListSize = Math.max(2, random.nextInt(attendanceListSize + 1));
+            int requiredAttendanceListSize = 2;
             List<Attendance> requiredAttendanceList = new ArrayList<>(
                 requiredAttendanceListSize);
             for (int j = 0; j < requiredAttendanceListSize; j++) {
@@ -235,9 +168,9 @@ public class MeetingSchedulingGenerator {
             }
             meeting.setRequiredAttendanceList(requiredAttendanceList);
 
-            logger.trace("Created meeting with topic ({}), durationInGrains ({}),"
+            logger.trace("Created meeting with durationInGrains ({}),"
                     + " requiredAttendanceListSize ({}).",
-                topic, durationInGrains,
+                durationInGrains,
                 requiredAttendanceListSize);
             meetingList.add(meeting);
         }
@@ -253,8 +186,7 @@ public class MeetingSchedulingGenerator {
         for (int i = 0; i < timeGrainListSize; i++) {
             TimeGrain timeGrain = new TimeGrain();
             timeGrain.setId((long) i);
-            int grainIndex = i;
-            timeGrain.setGrainIndex(grainIndex);
+            timeGrain.setGrainIndex(i);
             int dayOfYear = (i / startingMinuteOfDayOptions.length) + 1;
             if (day == null || day.getDayOfYear() != dayOfYear) {
                 day = new Day();
@@ -269,7 +201,7 @@ public class MeetingSchedulingGenerator {
             timeGrain.setStartingMinuteOfDay(startingMinuteOfDay);
             logger.trace(
                 "Created timeGrain with grainIndex ({}), dayOfYear ({}), startingMinuteOfDay ({}).",
-                grainIndex, dayOfYear, startingMinuteOfDay);
+                i, dayOfYear, startingMinuteOfDay);
             timeGrainList.add(timeGrain);
         }
         meetingSchedule.setDayList(dayList);
@@ -284,12 +216,9 @@ public class MeetingSchedulingGenerator {
             room.setId((long) i);
             String name = "R " + ((i / roomsPerFloor * 100) + (i % roomsPerFloor) + 1);
             room.setName(name);
-            int capacityOptionsSubsetSize = personsPerMeetingOptions.length * 3 / 4;
-            int capacity = personsPerMeetingOptions[personsPerMeetingOptions.length - (i
-                % capacityOptionsSubsetSize) - 1];
+            int capacity = 2;
             room.setCapacity(capacity);
-            logger.trace("Created room with name ({}), capacity ({}).",
-                name, capacity);
+            logger.trace("Created room with name ({}), capacity ({}).", name, capacity);
             roomList.add(room);
         }
         meetingSchedule.setRoomList(roomList);
