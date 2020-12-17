@@ -11,8 +11,8 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public static final String ROOM_CONFLICT = "Room conflict";
     public static final String DONT_GO_IN_OVERTIME = "Don't go in overtime";
     public static final String REQUIRED_ATTENDANCE_CONFLICT = "Required attendance conflict";
-    public static final String REQUIRED_ROOM_CAPACITY = "Required room capacity";
-    public static final String START_AND_END_ON_SAME_DAY = "Start and end on same day";
+
+    public static final String ASSIGNED_MEETINGS = "Assigned meetings";
 
     public static final String DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE = "Do all meetings as soon as possible";
     public static final String ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS =
@@ -21,17 +21,19 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public static final String ASSIGN_LARGER_ROOMS_FIRST = "Assign larger rooms first";
     public static final String ROOM_STABILITY = "Room stability";
 
+    // Hard
     @ConstraintWeight(ROOM_CONFLICT)
     private HardMediumSoftScore roomConflict = HardMediumSoftScore.ofHard(1);
     @ConstraintWeight(DONT_GO_IN_OVERTIME)
     private HardMediumSoftScore dontGoInOvertime = HardMediumSoftScore.ofHard(1);
     @ConstraintWeight(REQUIRED_ATTENDANCE_CONFLICT)
     private HardMediumSoftScore requiredAttendanceConflict = HardMediumSoftScore.ofHard(1);
-    @ConstraintWeight(REQUIRED_ROOM_CAPACITY)
-    private HardMediumSoftScore requiredRoomCapacity = HardMediumSoftScore.ofHard(1);
-    @ConstraintWeight(START_AND_END_ON_SAME_DAY)
-    private HardMediumSoftScore startAndEndOnSameDay = HardMediumSoftScore.ofHard(1);
 
+    // Medium
+    @ConstraintWeight(ASSIGNED_MEETINGS)
+    private HardMediumSoftScore assignedMeetings = HardMediumSoftScore.ofMedium(1);
+
+    // Soft
     @ConstraintWeight(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE)
     private HardMediumSoftScore doAllMeetingsAsSoonAsPossible = HardMediumSoftScore.ofSoft(1);
     @ConstraintWeight(ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS)
@@ -79,22 +81,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
         this.requiredAttendanceConflict = requiredAttendanceConflict;
     }
 
-    public HardMediumSoftScore getRequiredRoomCapacity() {
-        return requiredRoomCapacity;
-    }
-
-    public void setRequiredRoomCapacity(HardMediumSoftScore requiredRoomCapacity) {
-        this.requiredRoomCapacity = requiredRoomCapacity;
-    }
-
-    public HardMediumSoftScore getStartAndEndOnSameDay() {
-        return startAndEndOnSameDay;
-    }
-
-    public void setStartAndEndOnSameDay(HardMediumSoftScore startAndEndOnSameDay) {
-        this.startAndEndOnSameDay = startAndEndOnSameDay;
-    }
-
     public HardMediumSoftScore getDoAllMeetingsAsSoonAsPossible() {
         return doAllMeetingsAsSoonAsPossible;
     }
@@ -119,6 +105,14 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
 
     public void setOverlappingMeetings(HardMediumSoftScore overlappingMeetings) {
         this.overlappingMeetings = overlappingMeetings;
+    }
+
+    public HardMediumSoftScore getAssignedMeetings() {
+        return assignedMeetings;
+    }
+
+    public void setAssignedMeetings(HardMediumSoftScore assignedMeetings) {
+        this.assignedMeetings = assignedMeetings;
     }
 
     public HardMediumSoftScore getAssignLargerRoomsFirst() {

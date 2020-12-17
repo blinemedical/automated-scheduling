@@ -10,10 +10,9 @@ import static org.blinemedical.examination.domain.MeetingConstraintConfiguration
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.OVERLAPPING_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.REQUIRED_ATTENDANCE_CONFLICT;
-import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.REQUIRED_ROOM_CAPACITY;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_CONFLICT;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_STABILITY;
-import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.START_AND_END_ON_SAME_DAY;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGNED_MEETINGS;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -102,6 +101,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             constraintConfiguration.setId(0L);
 
             // TODO refactor this to allow setting pos/neg, weight and score level
+            // Hard
             readIntConstraintParameterLine(ROOM_CONFLICT,
                 hardScore -> constraintConfiguration
                     .setRoomConflict(HardMediumSoftScore.ofHard(hardScore)), "");
@@ -112,13 +112,11 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 hardScore -> constraintConfiguration
                     .setRequiredAttendanceConflict(HardMediumSoftScore.ofHard(hardScore)),
                 "");
-            readIntConstraintParameterLine(REQUIRED_ROOM_CAPACITY,
-                hardScore -> constraintConfiguration
-                    .setRequiredRoomCapacity(HardMediumSoftScore.ofHard(hardScore)), "");
-            readIntConstraintParameterLine(START_AND_END_ON_SAME_DAY,
-                hardScore -> constraintConfiguration
-                    .setStartAndEndOnSameDay(HardMediumSoftScore.ofHard(hardScore)), "");
-
+            // Medium
+            readIntConstraintParameterLine(ASSIGNED_MEETINGS,
+                mediumScore -> constraintConfiguration
+                    .setAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)), "");
+            // Soft
             readIntConstraintParameterLine(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 softScore -> constraintConfiguration
                     .setDoAllMeetingsAsSoonAsPossible(HardMediumSoftScore.ofSoft(softScore)), "");
@@ -243,7 +241,8 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             return attendanceList;
         }
 
-        private Attendance getRequiredAttendee(Meeting meeting, Map<String, Person> personMap, Set<Person> requiredPersonSet) {
+        private Attendance getRequiredAttendee(Meeting meeting, Map<String, Person> personMap,
+            Set<Person> requiredPersonSet) {
             String personName = nextStringCell().getStringCellValue();
             Attendance requiredAttendance = new Attendance();
             Person person = personMap.get(personName);
@@ -399,7 +398,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
         }
     }
 
-    private class MeetingSchedulingXlsxWriter extends
+    private static class MeetingSchedulingXlsxWriter extends
         AbstractXlsxWriter<MeetingSchedule, HardMediumSoftScore> {
 
         MeetingSchedulingXlsxWriter(
@@ -443,6 +442,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 .getConstraintConfiguration();
 
             // TODO refactor this to allow setting pos/neg, weight and score level
+            // Hard
             writeIntConstraintParameterLine(ROOM_CONFLICT,
                 constraintConfiguration.getRoomConflict().getHardScore(), "");
             writeIntConstraintParameterLine(DONT_GO_IN_OVERTIME,
@@ -450,11 +450,14 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 "");
             writeIntConstraintParameterLine(REQUIRED_ATTENDANCE_CONFLICT,
                 constraintConfiguration.getRequiredAttendanceConflict().getHardScore(), "");
-            writeIntConstraintParameterLine(REQUIRED_ROOM_CAPACITY,
-                constraintConfiguration.getRequiredRoomCapacity().getHardScore(), "");
-            writeIntConstraintParameterLine(START_AND_END_ON_SAME_DAY,
-                constraintConfiguration.getStartAndEndOnSameDay().getHardScore(), "");
             nextRow();
+
+            // Medium
+            writeIntConstraintParameterLine(ASSIGNED_MEETINGS,
+                constraintConfiguration.getAssignedMeetings().getMediumScore(), "");
+            nextRow();
+
+            // Soft
             writeIntConstraintParameterLine(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 constraintConfiguration.getDoAllMeetingsAsSoonAsPossible().getSoftScore(), "");
             writeIntConstraintParameterLine(ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
@@ -704,13 +707,17 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
 
         private void writeMeetingAssignmentList(List<MeetingAssignment> meetingAssignmentList) {
             String[] filteredConstraintNames = {
-                ROOM_CONFLICT, DONT_GO_IN_OVERTIME, REQUIRED_ATTENDANCE_CONFLICT,
-                REQUIRED_ROOM_CAPACITY,
-                START_AND_END_ON_SAME_DAY,
+                ROOM_CONFLICT,
+                DONT_GO_IN_OVERTIME,
+                REQUIRED_ATTENDANCE_CONFLICT,
+
+                ASSIGNED_MEETINGS,
 
                 DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
-                OVERLAPPING_MEETINGS, ASSIGN_LARGER_ROOMS_FIRST, ROOM_STABILITY
+                OVERLAPPING_MEETINGS,
+                ASSIGN_LARGER_ROOMS_FIRST,
+                ROOM_STABILITY
             };
             int mergeStart = -1;
             int previousMeetingRemainingTimeGrains = 0;
@@ -790,7 +797,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
         private void writeTimeGrainHoursHeaders() {
             for (TimeGrain timeGrain : solution.getTimeGrainList()) {
                 LocalTime startTime = LocalTime
-                    .ofSecondOfDay(timeGrain.getStartingMinuteOfDay() * 60);
+                    .ofSecondOfDay(timeGrain.getStartingMinuteOfDay() * 60L);
                 nextHeaderCell(TIME_FORMATTER.format(startTime));
             }
         }

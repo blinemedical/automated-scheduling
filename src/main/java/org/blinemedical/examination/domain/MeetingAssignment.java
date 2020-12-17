@@ -18,8 +18,7 @@ public class MeetingAssignment extends AbstractPersistable {
     public MeetingAssignment() {
     }
 
-    public MeetingAssignment(
-        Meeting meeting, TimeGrain startingTimeGrain, Room room) {
+    public MeetingAssignment(Meeting meeting, TimeGrain startingTimeGrain, Room room) {
         this.meeting = meeting;
         this.startingTimeGrain = startingTimeGrain;
         this.room = room;
@@ -42,7 +41,7 @@ public class MeetingAssignment extends AbstractPersistable {
         this.pinned = pinned;
     }
 
-    @PlanningVariable(valueRangeProviderRefs = {"timeGrainRange"})
+    @PlanningVariable(valueRangeProviderRefs = {"timeGrainRange"}, nullable = true)
     public TimeGrain getStartingTimeGrain() {
         return startingTimeGrain;
     }
@@ -51,7 +50,7 @@ public class MeetingAssignment extends AbstractPersistable {
         this.startingTimeGrain = startingTimeGrain;
     }
 
-    @PlanningVariable(valueRangeProviderRefs = {"roomRange"})
+    @PlanningVariable(valueRangeProviderRefs = {"roomRange"}, nullable = true)
     public Room getRoom() {
         return room;
     }
@@ -111,10 +110,4 @@ public class MeetingAssignment extends AbstractPersistable {
         return "<html><center>" + WordUtils.wrap(meeting.toString(), wrapLength, "<br/>", false)
             + "</center></html>";
     }
-
-    @Override
-    public String toString() {
-        return meeting.toString();
-    }
-
 }

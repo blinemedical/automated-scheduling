@@ -9,17 +9,17 @@
         <RollingFile name="RollingFile" filename="log/examination.log"
             filepattern="${logPath}/%d{YYYYMMddHHmmss}-fargo.log">
             <PatternLayout
-                pattern="%d{HH:mm:ss.SSS} [%t] %logger %highlight{%-5level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green} %highlight{%m} %n" />
+                pattern="%d{HH:mm:ss.SSS} [%t] %logger %highlight{%-5level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green} %highlight{%m} %n"/>
             <Policies>
-                <SizeBasedTriggeringPolicy size="100 MB" />
+                <SizeBasedTriggeringPolicy size="100 MB"/>
             </Policies>
-            <DefaultRolloverStrategy max="20" />
+            <DefaultRolloverStrategy max="20"/>
         </RollingFile>
     </Appenders>
     <Loggers>
         <Root level="info">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="RollingFile" />
+            <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 </Configuration>
