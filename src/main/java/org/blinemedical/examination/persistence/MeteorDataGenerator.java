@@ -19,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.blinemedical.examination.app.ExaminationApp;
@@ -48,7 +48,7 @@ public class MeteorDataGenerator {
     static HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     static JsonFactory JSON_FACTORY = new JacksonFactory();
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         MeteorDataGenerator generator = new MeteorDataGenerator();
 
         Instant startTime = Instant.parse("2020-12-18T08:00:00.00Z");
@@ -56,15 +56,18 @@ public class MeteorDataGenerator {
         Duration meetingDuration = Duration.ofHours(1L);
         int meetingDurationInGrains = (int) (meetingDuration.toMinutes() / GRAIN_LENGTH_IN_MINUTES);
 
-        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
-            (HttpRequest request) -> request.setParser(new JsonObjectParser(JSON_FACTORY)));
+        HttpRequestFactory requestFactory
+            = HTTP_TRANSPORT.createRequestFactory(
+            (HttpRequest request) -> {
+                request.setParser(new JsonObjectParser(JSON_FACTORY));
+            });
         String token = "ba90383942681f06cd2f9da85c67cd1a73072fe1dd274c8fb3da27c863b77d5be918b1a8d9033d5543ea20e9e8e548d0da87584bda9f4c01419ca3f9ab7349e8dc2457cdc8475fb77f0be28195586c0f0a1997c03280d06705ed5d475a624b1e33ac200e0b3dfb2da56d4c5b98444725:%242b%2410%24w.Njat.T2kVk5CmHzNMDl.2WHPLOdYFJ%2F70utd.RBGydrF%2FaFlD1O";
         HttpHeaders headers = new HttpHeaders();
         headers.set("token", token);
 
         // all users
-        HttpRequest request = requestFactory.buildGetRequest(
-            new GenericUrl("http://localhost:8080/api/sample-data"))
+        HttpRequest request = requestFactory
+            .buildGetRequest(new GenericUrl("http://localhost:8080/api/sample-data"))
             .setHeaders(headers);
         HttpResponse response = request.execute();
 
@@ -75,8 +78,6 @@ public class MeteorDataGenerator {
         JsonArray learners = el.getAsJsonObject().get("learners").getAsJsonArray();
         JsonArray patients = el.getAsJsonObject().get("patients").getAsJsonArray();
         JsonArray scenarios = el.getAsJsonObject().get("scenarios").getAsJsonArray();
-
-//        scenarios.forEach(scenario -> scenario.getAsJsonObject().add("patients", patients));
 
         generator.writeMeetingSchedule(learners, patients, rooms, scenarios, startTime, endTime,
             meetingDurationInGrains);
@@ -173,7 +174,8 @@ public class MeteorDataGenerator {
         List<Attendance> learnerList = createLearners(meetingSchedule, learners);
         List<Attendance> patientList = createPatients(meetingSchedule, patients, learnersListSize);
         createScenariosAndAddPatients(meetingSchedule, scenarios, patientList);
-        createMeetingListAndAttendanceList(meetingSchedule, learnerList, durationInGrains);
+        createMeetingListAndAttendanceList(meetingSchedule, learnerList,
+            durationInGrains);
         createTimeGrainList(meetingSchedule, startTime, timeGrainListSize);
         createRoomList(meetingSchedule, rooms);
         createMeetingAssignmentList(meetingSchedule);
@@ -243,10 +245,9 @@ public class MeteorDataGenerator {
             patient.setPerson(person);
             personList.add(person);
 
-            // person is filled in later
             patientList.add(patient);
 
-            logger.trace("Created patient ({})", patient);
+            logger.trace("Created Patient ({})", patient);
         }
 
         meetingSchedule.getAttendanceList().addAll(patientList);
@@ -285,21 +286,19 @@ public class MeteorDataGenerator {
                 logger.debug("Looking for name ({}), id ({}), in scenario ({}).",
                     patientDataName, patientDataId, scenario.getName());
                 Optional<Attendance> patientToAdd = patientList.stream()
-                    .filter(p -> p.getPerson().getPersonId().equalsIgnoreCase(patientDataId))
+                    .filter(patient -> patient.getPerson().getPersonId()
+                        .equalsIgnoreCase(patientDataId))
                     .findAny();
-
                 if (patientToAdd.isPresent()) {
                     Attendance patient = patientToAdd.get();
+                    scenario.getPatients().add(patient);
                     logger.debug("Found patient ({}), adding them to scenario ({}).",
                         patient.getPerson().getFullName(), scenario.getName());
-                    scenario.getPatients().add(patient);
                 } else {
                     logger.error("Did not find patient ({}) in scenario ({}).",
                         patientDataName, scenario.getName());
                 }
             }
-
-            scenario.setPatients(patientList);
 
             scenarioList.add(scenario);
             logger.trace("Created scenario with name ({}) and ({}) patients.",
