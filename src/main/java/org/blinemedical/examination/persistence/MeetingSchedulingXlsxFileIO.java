@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGNED_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DONT_GO_IN_OVERTIME;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.HALF_ASSIGNED_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.OVERLAPPING_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.REQUIRED_ATTENDANCE_CONFLICT;
@@ -119,6 +120,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             readIntConstraintParameterLine(ASSIGNED_MEETINGS,
                 mediumScore -> constraintConfiguration
                     .setAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)), "");
+            readIntConstraintParameterLine(HALF_ASSIGNED_MEETINGS,
+                mediumScore -> constraintConfiguration
+                    .setHalfAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)), "");
             // Soft
             readIntConstraintParameterLine(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 softScore -> constraintConfiguration
@@ -476,6 +480,8 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
 
             // Medium
             writeIntConstraintParameterLine(ASSIGNED_MEETINGS,
+                constraintConfiguration.getHalfAssignedMeetings().getMediumScore(), "");
+            writeIntConstraintParameterLine(HALF_ASSIGNED_MEETINGS,
                 constraintConfiguration.getAssignedMeetings().getMediumScore(), "");
             nextRow();
 
@@ -749,6 +755,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 REQUIRED_ATTENDANCE_CONFLICT,
 
                 ASSIGNED_MEETINGS,
+                HALF_ASSIGNED_MEETINGS,
 
                 DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
@@ -868,7 +875,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 // Filter out filtered constraints
                 .filter(constraintMatch -> filteredConstraintNames == null
                     || filteredConstraintNames.contains(constraintMatch.getConstraintName()))
-                .map(constraintMatch -> constraintMatch.getScore())
+                .map(ConstraintMatch::getScore)
                 // Filter out positive constraints
                 .filter(indictmentScore -> !(indictmentScore.getHardScore() >= 0
                     && indictmentScore.getSoftScore() >= 0))
@@ -919,7 +926,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                                 .equals(constraintName))
                             .collect(toList());
                         HardMediumSoftScore sum = filteredConstraintMatchList.stream()
-                            .map(constraintMatch -> constraintMatch.getScore())
+                            .map(ConstraintMatch::getScore)
                             .reduce(HardMediumSoftScore::add)
                             .orElse(HardMediumSoftScore.ZERO);
                         String justificationTalkCodes = filteredConstraintMatchList.stream()

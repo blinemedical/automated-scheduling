@@ -13,6 +13,7 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public static final String REQUIRED_ATTENDANCE_CONFLICT = "Required attendance conflict";
 
     public static final String ASSIGNED_MEETINGS = "Assigned meetings";
+    public static final String HALF_ASSIGNED_MEETINGS = "Half assigned meetings";
 
     public static final String DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE = "Do all meetings as soon as possible";
     public static final String ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS =
@@ -31,6 +32,8 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     // Medium
     @ConstraintWeight(ASSIGNED_MEETINGS)
     private HardMediumSoftScore assignedMeetings = HardMediumSoftScore.ofMedium(1);
+    @ConstraintWeight(HALF_ASSIGNED_MEETINGS)
+    private HardMediumSoftScore halfAssignedMeetings = HardMediumSoftScore.ofMedium(1);
 
     // Soft
     @ConstraintWeight(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE)
@@ -110,6 +113,14 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
 
     public void setAssignedMeetings(HardMediumSoftScore assignedMeetings) {
         this.assignedMeetings = assignedMeetings;
+    }
+
+    public HardMediumSoftScore getHalfAssignedMeetings() {
+        return halfAssignedMeetings;
+    }
+
+    public void setHalfAssignedMeetings(HardMediumSoftScore halfAssignedMeetings) {
+        this.halfAssignedMeetings = halfAssignedMeetings;
     }
 
     public HardMediumSoftScore getRoomStability() {

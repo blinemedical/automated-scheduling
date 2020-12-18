@@ -112,8 +112,7 @@ public class MeteorDataGenerator {
         int patientsListSize = patients.size();
         int scenarioListSize = scenarios.size();
         Duration meetingDuration = Duration.between(startTime, endTime);
-        int timeGrainListSize = (int) meetingDuration.dividedBy(GRAIN_LENGTH_IN_MINUTES)
-            .toMinutes();
+        int timeGrainListSize = (int) (meetingDuration.toMinutes() / GRAIN_LENGTH_IN_MINUTES);
 
         String fileName = determineFileName(
             learnersListSize,
@@ -136,7 +135,8 @@ public class MeteorDataGenerator {
     }
 
     private String determineFileName(int learnersListSize, int patientsListSize, int roomListSize, int scenarioListSize) {
-        return learnersListSize + "L-"
+        return "MET-"
+            + learnersListSize + "L-"
             + scenarioListSize + "SC-"
             + patientsListSize + "SP-"
             + roomListSize + "R";

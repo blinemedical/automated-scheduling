@@ -90,7 +90,8 @@ public class MeetingSchedulingGenerator {
 
     private String determineFileName(int learnersListSize, int numScenarios,
         int patientsPerScenario, int roomListSize) {
-        return learnersListSize + "L-"
+        return "FAKE-"
+            + learnersListSize + "L-"
             + numScenarios + "SC-"
             + patientsPerScenario + "SP-"
             + roomListSize + "R";
