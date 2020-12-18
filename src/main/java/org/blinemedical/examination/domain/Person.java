@@ -7,6 +7,7 @@ public class Person extends AbstractPersistable implements Labeled {
 
     private String fullName;
     private boolean patient;
+    private String personId;
 
     public String getFullName() {
         return fullName;
@@ -22,6 +23,14 @@ public class Person extends AbstractPersistable implements Labeled {
 
     public void setPatient(boolean patient) {
         this.patient = patient;
+    }
+
+    public void setPersonId(String id) {
+        this.personId = id;
+    }
+    
+    public String getPersonId() {
+        return personId;
     }
 
     @Override

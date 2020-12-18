@@ -168,7 +168,8 @@ public class MeteorDataGenerator {
         meetingSchedule.setPersonList(new ArrayList<>());
 
         List<Attendance> learnerList = createLearners(meetingSchedule, learners);
-        createScenariosAndPatients(meetingSchedule, learnersListSize, scenarios);
+        List<Attendance> patientList = createPatients(meetingSchedule, patients, learnersListSize);
+        createScenariosAndAddPatients(meetingSchedule, scenarios, patientList);
         createMeetingListAndAttendanceList(meetingSchedule, learnerList,
             durationInGrains);
         createTimeGrainList(meetingSchedule, startTime, timeGrainListSize);
@@ -219,19 +220,44 @@ public class MeteorDataGenerator {
         return learnerList;
     }
 
-    private void createScenariosAndPatients(
+    private List<Attendance> createPatients(MeetingSchedule meetingSchedule, JsonArray patients, int learnersListSize) {
+        int patientsListSize = patients.size();
+
+        List<Attendance> patientList = new ArrayList<>(patientsListSize);
+        List<Person> personList = new ArrayList<>();
+
+        long attendanceId = learnersListSize;
+        long personId = learnersListSize;
+
+        for (int learnerIdx = 0; learnerIdx < patientsListSize; learnerIdx++) {
+            Attendance patient = new Attendance();
+            patient.setId(attendanceId);
+            attendanceId++;
+
+            Person person = createPerson(personId++, patients.get(learnerIdx).getAsJsonObject());
+            person.setPatient(true);
+            patient.setPerson(person);
+            personList.add(person);
+
+            // person is filled in later
+            patientList.add(patient);
+        }
+
+        meetingSchedule.getAttendanceList().addAll(patientList);
+        meetingSchedule.getPersonList().addAll(personList);
+
+        return patientList;
+    }
+
+    private void createScenariosAndAddPatients(
         MeetingSchedule meetingSchedule,
-        int learnersListSize,
-        JsonArray scenarios) {
+        JsonArray scenarios,
+        List<Attendance> patientList) {
         int numScenarios = scenarios.size();
 
         List<Scenario> scenarioList = new ArrayList<>(numScenarios);
-        List<Attendance> patientList = new ArrayList<>();
-        List<Person> personList = new ArrayList<>();
 
         long scenarioId = 0L;
-        long attendanceId = learnersListSize;
-        long personId = learnersListSize;
 
         for (int scenarioIdx = 0; scenarioIdx < numScenarios; scenarioIdx++) {
             JsonObject scenarioData = scenarios.get(scenarioIdx).getAsJsonObject();
@@ -241,22 +267,27 @@ public class MeteorDataGenerator {
             scenario.setName(scenarioName);
             scenarioId++;
 
-            JsonArray patients = scenarioData.get("patients").getAsJsonArray();
-            int patientsPerScenario = patients.size();
-            patientList = new ArrayList<>(numScenarios * patientsPerScenario);
+            JsonArray patientsData = scenarioData.get("patients").getAsJsonArray();
+            int patientsPerScenario = patientsData.size();
             scenario.setPatients(new ArrayList<>());
 
             for (int patientIdx = 0; patientIdx < patientsPerScenario; patientIdx++) {
-                Attendance patient = new Attendance();
-                patient.setId(attendanceId++);
-
-                Person person = createPerson(personId++, patients.get(patientIdx).getAsJsonObject());
-                person.setPatient(true);
-                patient.setPerson(person);
-                personList.add(person);
-
-                patientList.add(patient);
-                scenario.getPatients().add(patient);
+                JsonObject patientData = patientsData.get(patientIdx).getAsJsonObject();
+                for(Attendance patient : patientList) {
+                    String patientDataId = patientData.get("userId").getAsString();
+                    String patientDataName = patientData.get("name").getAsString();
+                    logger.info("Looking for name ({}), id ({}), vs ({}), in scenario ({}).",
+                        patientDataName, patientDataId, patient.getPerson().getPersonId(), scenario.getName());
+                    if (patient.getPerson().getPersonId().equalsIgnoreCase(patientDataId)) {
+                        logger.info("Found, adding patient ({}), to scenario ({}).",
+                            patient.getPerson().getFullName(), scenario.getName());
+                        scenario.getPatients().add(patient);
+                        break;
+                    } else {
+//                        logger.info("Not: ({}) != ({})",
+//                            patient.getPerson().getPersonId(), patientDataId);
+                    }
+                }
             }
 
             scenarioList.add(scenario);
@@ -265,8 +296,6 @@ public class MeteorDataGenerator {
         }
 
         meetingSchedule.setScenarioList(scenarioList);
-        meetingSchedule.getAttendanceList().addAll(patientList);
-        meetingSchedule.getPersonList().addAll(personList);
     }
 
     private void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
@@ -358,7 +387,7 @@ public class MeteorDataGenerator {
             room.setId((long) i);
             String name = roomData.get("name").getAsString();
             room.setName(name);
-            int capacity = roomData.get("capacity").getAsInt();
+            //int capacity = roomData.get("capacity").getAsInt();
             logger.trace("Created room with name ({}).", name);
             roomList.add(room);
         }
@@ -368,6 +397,7 @@ public class MeteorDataGenerator {
     private Person createPerson(long id, JsonObject personData) {
         Person person = new Person();
         person.setId(id);
+        person.setPersonId(personData.get("userId").getAsString());
         String fullName = personData.get("name").getAsString();
         person.setFullName(fullName);
         logger.trace("Created person with fullName ({}).",

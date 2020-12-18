@@ -87,6 +87,7 @@ fabric.properties
 log/
 data/examination/solved/
 data/examination/unsolved/
+data/examination/old/
 
 # Mac file
 .DS_Store
