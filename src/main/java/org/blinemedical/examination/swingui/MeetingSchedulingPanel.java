@@ -49,7 +49,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
     private final TimeTablePanel<TimeGrain, Room> roomsPanel;
     private final TimeTablePanel<TimeGrain, Person> personsPanel;
     private final TimeTablePanel<TimeGrain, Scenario> scenariosPanel;
-    private final OvertimeTimeGrain OVERTIME_TIME_GRAIN = new OvertimeTimeGrain();
 
     public MeetingSchedulingPanel() {
         setLayout(new BorderLayout());
@@ -92,19 +91,12 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             personsPanel.defineColumnHeader(timeGrain);
             scenariosPanel.defineColumnHeader(timeGrain);
         }
-        roomsPanel.defineColumnHeader(OVERTIME_TIME_GRAIN); // Overtime timeGrain
-        personsPanel.defineColumnHeader(OVERTIME_TIME_GRAIN); // Overtime timeGrain
-        scenariosPanel.defineColumnHeader(OVERTIME_TIME_GRAIN); // Overtime timeGrain
-        roomsPanel.defineColumnHeader(null); // Unassigned timeGrain
-        personsPanel.defineColumnHeader(null); // Unassigned timeGrain
-        scenariosPanel.defineColumnHeader(null); // Unassigned timeGrain
 
         roomsPanel.defineRowHeaderByKey(HEADER_ROW_GROUP1); // Date header
         roomsPanel.defineRowHeaderByKey(HEADER_ROW); // TimeGrain header
         for (Room room : meetingSchedule.getRoomList()) {
             roomsPanel.defineRowHeader(room);
         }
-        roomsPanel.defineRowHeader(null); // Unassigned
 
         personsPanel.defineRowHeaderByKey(HEADER_ROW_GROUP1); // Day header
         personsPanel.defineRowHeaderByKey(HEADER_ROW); // TimeGrain header
@@ -117,7 +109,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         for (Scenario scenario : meetingSchedule.getScenarioList()) {
             scenariosPanel.defineRowHeader(scenario);
         }
-        scenariosPanel.defineRowHeader(null); // Unassigned
     }
 
     private void fillCells(MeetingSchedule meetingSchedule) {
@@ -145,8 +136,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             roomsPanel.addRowHeader(HEADER_COLUMN, room,
                 createTableHeader(new JLabel(room.getLabel(), SwingConstants.CENTER)));
         }
-        roomsPanel.addRowHeader(HEADER_COLUMN, null,
-            createTableHeader(new JLabel("Unassigned", SwingConstants.CENTER)));
     }
 
     private void fillPersonCells(MeetingSchedule meetingSchedule) {
@@ -188,18 +177,6 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             scenariosPanel.addColumnHeader(timeGrain, HEADER_ROW,
                 createTableHeader(new JLabel(timeGrain.getLabel())));
         }
-        roomsPanel.addColumnHeader(OVERTIME_TIME_GRAIN, HEADER_ROW,
-            createTableHeader(new JLabel("Overtime")));
-        personsPanel.addColumnHeader(OVERTIME_TIME_GRAIN, HEADER_ROW,
-            createTableHeader(new JLabel("Overtime")));
-        scenariosPanel.addColumnHeader(OVERTIME_TIME_GRAIN, HEADER_ROW,
-            createTableHeader(new JLabel("Overtime")));
-        roomsPanel.addColumnHeader(null, HEADER_ROW,
-            createTableHeader(new JLabel("Unassigned")));
-        personsPanel.addColumnHeader(null, HEADER_ROW,
-            createTableHeader(new JLabel("Unassigned")));
-        scenariosPanel.addColumnHeader(null, HEADER_ROW,
-            createTableHeader(new JLabel("Unassigned")));
 
         for (Day day : meetingSchedule.getDayList()) {
             TimeGrain firstTimeGrain = firstTimeGrainMap.get(day);
@@ -228,16 +205,20 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             TimeGrain startingTimeGrain = meetingAssignment.getStartingTimeGrain();
             TimeGrain lastTimeGrain;
             if (startingTimeGrain == null) {
-                lastTimeGrain = null;
+                continue;
             } else {
                 int lastTimeGrainIndex = meetingAssignment.getLastTimeGrainIndex();
                 List<TimeGrain> timeGrainList = meetingSchedule.getTimeGrainList();
                 if (lastTimeGrainIndex < meetingSchedule.getTimeGrainList().size()) {
                     lastTimeGrain = timeGrainList.get(lastTimeGrainIndex);
                 } else {
-                    lastTimeGrain = OVERTIME_TIME_GRAIN;
+                    continue;
                 }
             }
+            if(meetingAssignment.getRoom() == null) {
+                continue;
+            }
+
             roomsPanel.addCell(
                 startingTimeGrain, meetingAssignment.getRoom(),
                 lastTimeGrain, meetingAssignment.getRoom(),
