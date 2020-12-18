@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGNED_MEETINGS;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DONT_GO_IN_OVERTIME;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS;
@@ -11,7 +12,6 @@ import static org.blinemedical.examination.domain.MeetingConstraintConfiguration
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.REQUIRED_ATTENDANCE_CONFLICT;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_CONFLICT;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_STABILITY;
-import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGNED_MEETINGS;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -27,6 +27,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ import org.blinemedical.examination.domain.MeetingConstraintConfiguration;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
 import org.blinemedical.examination.domain.Room;
+import org.blinemedical.examination.domain.Scenario;
 import org.blinemedical.examination.domain.TimeGrain;
 import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import org.optaplanner.core.api.score.constraint.ConstraintMatch;
@@ -58,9 +60,10 @@ import org.optaplanner.examples.meetingscheduling.app.MeetingSchedulingApp;
 
 public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<MeetingSchedule> {
 
+    private static final String COMMA_DELIMITER = ", ";
+
     @Override
-    public MeetingSchedule read(
-        File inputScheduleFile) {
+    public MeetingSchedule read(File inputScheduleFile) {
         try (InputStream in = new BufferedInputStream(new FileInputStream(inputScheduleFile))) {
             XSSFWorkbook workbook = new XSSFWorkbook(in);
             return new MeetingSchedulingXlsxReader(workbook).read();
@@ -84,6 +87,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             readRoomList();
             readPersonList();
             readMeetingList();
+            readScenarios();
 
             return solution;
         }
@@ -139,11 +143,10 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextRow(false);
             readHeaderCell("Full name");
             readHeaderCell("Patient");
+            readHeaderCell("Id");
             List<Person> personList = new ArrayList<>(currentSheet.getLastRowNum() - 1);
-            long id = 0L;
             while (nextRow()) {
                 Person person = new Person();
-                person.setId(id++);
                 person.setFullName(nextStringCell().getStringCellValue());
                 if (!VALID_NAME_PATTERN.matcher(person.getFullName()).matches()) {
                     throw new IllegalStateException(
@@ -152,6 +155,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                             + ").");
                 }
                 person.setPatient(nextStringCell().getStringCellValue().equalsIgnoreCase("y"));
+                person.setId((long) nextCell().getNumericCellValue());
                 personList.add(person);
             }
             solution.setPersonList(personList);
@@ -202,6 +206,40 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             solution.setMeetingList(meetingList);
             solution.setMeetingAssignmentList(meetingAssignmentList);
             solution.setAttendanceList(attendanceList);
+        }
+
+        private void readScenarios() {
+            nextSheet("Scenarios");
+            nextRow(false);
+            readHeaderCell("Name");
+            readHeaderCell("Patients");
+
+            Map<Long, List<Attendance>> personIdToAttendanceMap = new HashMap<>();
+            for (Attendance attendance : solution.getAttendanceList()) {
+                List<Attendance> attendances = personIdToAttendanceMap
+                    .computeIfAbsent(attendance.getPerson().getId(), id -> new ArrayList<>());
+                attendances.add(attendance);
+            }
+
+            List<Scenario> scenarioList = new ArrayList<>(currentSheet.getLastRowNum() - 1);
+            long scenarioId = 0L;
+            while (nextRow()) {
+                Scenario scenario = new Scenario();
+                scenario.setId(scenarioId++);
+                scenario.setName(nextStringCell().getStringCellValue());
+
+                scenario.setPatients(
+                    Arrays.stream(nextStringCell().getStringCellValue().split(COMMA_DELIMITER))
+                        .filter(personId -> !personId.isEmpty())
+                        .flatMap(personIdString -> {
+                            Long personId = Long.parseLong(personIdString);
+                            List<Attendance> attendances = personIdToAttendanceMap.get(personId);
+                            return attendances.stream();
+                        })
+                        .collect(toList()));
+                scenarioList.add(scenario);
+            }
+            solution.setScenarioList(scenarioList);
         }
 
         private void readMeetingDuration(Meeting meeting) {
@@ -404,14 +442,15 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             writeDays();
             writeRooms();
             writePersons();
+            writeScenarios();
             writeMeetings();
             writeRoomsView();
             writePersonsView();
             writePrintedFormView();
             writeScoreView(justificationList -> justificationList.stream()
                 .filter(o -> o instanceof MeetingAssignment)
-                .map(o -> ((MeetingAssignment) o).toString())
-                .collect(joining(", ")));
+                .map(Object::toString)
+                .collect(joining(COMMA_DELIMITER)));
             return workbook;
         }
 
@@ -460,15 +499,35 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             autoSizeColumnsWithHeader();
         }
 
+        private void writeScenarios() {
+            nextSheet("Scenarios", 1, 0, false);
+            nextRow();
+            nextHeaderCell("Name");
+            nextHeaderCell("Patients");
+            for (Scenario scenario : solution.getScenarioList()) {
+                nextRow();
+                nextCell().setCellValue(scenario.getName());
+
+                nextCell().setCellValue(scenario.getPatients().stream()
+                    .map(Attendance::getPerson)
+                    .map(Person::getId)
+                    .map(Object::toString)
+                    .collect(joining(COMMA_DELIMITER)));
+            }
+            autoSizeColumnsWithHeader();
+        }
+
         private void writePersons() {
             nextSheet("Persons", 1, 0, false);
             nextRow();
             nextHeaderCell("Full name");
             nextHeaderCell("Patient");
+            nextHeaderCell("Id");
             for (Person person : solution.getPersonList()) {
                 nextRow();
                 nextCell().setCellValue(person.getFullName());
                 nextCell().setCellValue(person.isPatient() ? "Y" : "");
+                nextCell().setCellValue(person.getId());
             }
             autoSizeColumnsWithHeader();
         }
@@ -883,7 +942,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                                 && justification != meetingAssignment)
                             .distinct()
                             .map(o -> Long.toString(((MeetingAssignment) o).getMeeting().getId()))
-                            .collect(joining(", "));
+                            .collect(joining(COMMA_DELIMITER));
                         commentString.append("\n    ").append(sum.toShortString())
                             .append(" for ").append(filteredConstraintMatchList.size())
                             .append(" ").append(constraintName).append("s")
