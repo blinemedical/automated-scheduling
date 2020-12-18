@@ -129,7 +129,9 @@ public class MeetingSchedulingGenerator {
             .valueOf((long) timeGrainListSize * roomListSize)
             .pow(meetingSchedule.getMeetingAssignmentList().size());
         logger.info(
-            "MeetingSchedule {} has {} learners, {} scenarios, {} patients per scenario, {} timeGrains and {} rooms with a search space of {}.",
+            "MeetingSchedule {} has {} learners, {} scenarios, {} total patients, "
+                + "{} timeGrains and {} rooms "
+                + "with a search space of (#timeSlots * #rooms)^(#meetingAssignments)={}.",
             fileName,
             learnersListSize,
             numScenarios,
@@ -312,7 +314,7 @@ public class MeetingSchedulingGenerator {
         return person;
     }
 
-    private void createMeetingAssignmentList(MeetingSchedule meetingSchedule) {
+    public static void createMeetingAssignmentList(MeetingSchedule meetingSchedule) {
         List<Meeting> meetingList = meetingSchedule.getMeetingList();
         List<MeetingAssignment> meetingAssignmentList = new ArrayList<>(meetingList.size());
         for (Meeting meeting : meetingList) {

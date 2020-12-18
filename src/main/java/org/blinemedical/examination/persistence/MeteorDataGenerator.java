@@ -1,6 +1,7 @@
 package org.blinemedical.examination.persistence;
 
 import static org.blinemedical.examination.domain.TimeGrain.GRAIN_LENGTH_IN_MINUTES;
+import static org.blinemedical.examination.persistence.MeetingSchedulingGenerator.createMeetingAssignmentList;
 import static org.blinemedical.examination.persistence.MeetingSchedulingGenerator.createMeetingListAndAttendanceList;
 import static org.blinemedical.examination.persistence.MeetingSchedulingGenerator.createTimeGrainList;
 
@@ -184,7 +185,9 @@ public class MeteorDataGenerator {
             .valueOf((long) timeGrainListSize * roomListSize)
             .pow(meetingSchedule.getMeetingAssignmentList().size());
         logger.info(
-            "MeetingSchedule {} has {} learners, {} scenarios, {} total patients, {} timeGrains and {} rooms with a search space of {}.",
+            "MeetingSchedule {} has {} learners, {} scenarios, {} total patients, "
+                + "{} timeGrains and {} rooms "
+                + "with a search space of (#timeSlots * #rooms)^(#meetingAssignments)={}.",
             fileName,
             learnersListSize,
             numScenarios,
@@ -283,7 +286,7 @@ public class MeteorDataGenerator {
                 String patientDataId = patientData.get("userId").getAsString();
                 String patientDataName = patientData.get("name").getAsString();
 
-                logger.debug("Looking for name ({}), id ({}), in scenario ({}).",
+                logger.trace("Looking for name ({}), id ({}), in scenario ({}).",
                     patientDataName, patientDataId, scenario.getName());
                 Optional<Attendance> patientToAdd = patientList.stream()
                     .filter(patient -> patient.getPerson().getPersonId()
@@ -292,7 +295,7 @@ public class MeteorDataGenerator {
                 if (patientToAdd.isPresent()) {
                     Attendance patient = patientToAdd.get();
                     scenario.getPatients().add(patient);
-                    logger.debug("Found patient ({}), adding them to scenario ({}).",
+                    logger.trace("Found patient ({}), adding them to scenario ({}).",
                         patient.getPerson().getFullName(), scenario.getName());
                 } else {
                     logger.error("Did not find patient ({}) in scenario ({}).",
@@ -334,17 +337,4 @@ public class MeteorDataGenerator {
             fullName);
         return person;
     }
-
-    private void createMeetingAssignmentList(MeetingSchedule meetingSchedule) {
-        List<Meeting> meetingList = meetingSchedule.getMeetingList();
-        List<MeetingAssignment> meetingAssignmentList = new ArrayList<>(meetingList.size());
-        for (Meeting meeting : meetingList) {
-            MeetingAssignment meetingAssignment = new MeetingAssignment();
-            meetingAssignment.setId(meeting.getId());
-            meetingAssignment.setMeeting(meeting);
-            meetingAssignmentList.add(meetingAssignment);
-        }
-        meetingSchedule.setMeetingAssignmentList(meetingAssignmentList);
-    }
-
 }
