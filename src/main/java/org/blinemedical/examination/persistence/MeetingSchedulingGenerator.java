@@ -66,8 +66,7 @@ public class MeetingSchedulingGenerator {
         Instant startTime,
         Instant endTime, int durationInGrains) {
         Duration meetingDuration = Duration.between(startTime, endTime);
-        int timeGrainListSize = (int) meetingDuration.dividedBy(GRAIN_LENGTH_IN_MINUTES)
-            .toMinutes();
+        int timeGrainListSize = (int) (meetingDuration.toMinutes() / GRAIN_LENGTH_IN_MINUTES);
 
         String fileName = determineFileName(
             learnersListSize,

@@ -37,7 +37,7 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     private HardMediumSoftScore doAllMeetingsAsSoonAsPossible = HardMediumSoftScore.ofSoft(1);
     @ConstraintWeight(ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS)
     private HardMediumSoftScore oneTimeGrainBreakBetweenTwoConsecutiveMeetings = HardMediumSoftScore
-        .ofSoft(100);
+        .ofSoft(0);
     @ConstraintWeight(OVERLAPPING_MEETINGS)
     private HardMediumSoftScore overlappingMeetings = HardMediumSoftScore.ofSoft(10);
     @ConstraintWeight(ROOM_STABILITY)
