@@ -1,8 +1,10 @@
 package org.blinemedical.examination.swingui;
 
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.optaplanner.examples.common.swingui.timetable.TimeTablePanel.HeaderColumnKey.HEADER_COLUMN;
 import static org.optaplanner.examples.common.swingui.timetable.TimeTablePanel.HeaderColumnKey.HEADER_COLUMN_GROUP1;
+import static org.optaplanner.examples.common.swingui.timetable.TimeTablePanel.HeaderColumnKey.HEADER_COLUMN_GROUP2;
 import static org.optaplanner.examples.common.swingui.timetable.TimeTablePanel.HeaderRowKey.HEADER_ROW;
 import static org.optaplanner.examples.common.swingui.timetable.TimeTablePanel.HeaderRowKey.HEADER_ROW_GROUP1;
 
@@ -46,15 +48,22 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
 
     private final TimeTablePanel<TimeGrain, Room> roomsPanel;
     private final TimeTablePanel<TimeGrain, Person> personsPanel;
+    private final TimeTablePanel<TimeGrain, Scenario> scenariosPanel;
     private final OvertimeTimeGrain OVERTIME_TIME_GRAIN = new OvertimeTimeGrain();
 
     public MeetingSchedulingPanel() {
         setLayout(new BorderLayout());
         JTabbedPane tabbedPane = new JTabbedPane();
+
         roomsPanel = new TimeTablePanel<>();
         tabbedPane.add("Rooms", new JScrollPane(roomsPanel));
+
         personsPanel = new TimeTablePanel<>();
-        tabbedPane.add("Persons", new JScrollPane(personsPanel));
+        tabbedPane.add("Users", new JScrollPane(personsPanel));
+
+        scenariosPanel = new TimeTablePanel<>();
+        tabbedPane.add("Scenarios", new JScrollPane(scenariosPanel));
+
         add(tabbedPane, BorderLayout.CENTER);
         setPreferredSize(PREFERRED_SCROLLABLE_VIEWPORT_SIZE);
     }
@@ -68,6 +77,7 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
     public void resetPanel(MeetingSchedule meetingSchedule) {
         roomsPanel.reset();
         personsPanel.reset();
+        scenariosPanel.reset();
         defineGrid(meetingSchedule);
         fillCells(meetingSchedule);
         repaint(); // Hack to force a repaint of TimeTableLayout during "refresh screen while solving"
@@ -76,14 +86,18 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
     private void defineGrid(MeetingSchedule meetingSchedule) {
         roomsPanel.defineColumnHeaderByKey(HEADER_COLUMN); // Room header
         personsPanel.defineColumnHeaderByKey(HEADER_COLUMN_GROUP1); // Person header
+        scenariosPanel.defineColumnHeaderByKey(HEADER_COLUMN_GROUP2); // Scenario header
         for (TimeGrain timeGrain : meetingSchedule.getTimeGrainList()) {
             roomsPanel.defineColumnHeader(timeGrain);
             personsPanel.defineColumnHeader(timeGrain);
+            scenariosPanel.defineColumnHeader(timeGrain);
         }
         roomsPanel.defineColumnHeader(OVERTIME_TIME_GRAIN); // Overtime timeGrain
         personsPanel.defineColumnHeader(OVERTIME_TIME_GRAIN); // Overtime timeGrain
+        scenariosPanel.defineColumnHeader(OVERTIME_TIME_GRAIN); // Overtime timeGrain
         roomsPanel.defineColumnHeader(null); // Unassigned timeGrain
         personsPanel.defineColumnHeader(null); // Unassigned timeGrain
+        scenariosPanel.defineColumnHeader(null); // Unassigned timeGrain
 
         roomsPanel.defineRowHeaderByKey(HEADER_ROW_GROUP1); // Date header
         roomsPanel.defineRowHeaderByKey(HEADER_ROW); // TimeGrain header
@@ -97,15 +111,31 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         for (Person person : meetingSchedule.getPersonList()) {
             personsPanel.defineRowHeader(person);
         }
+
+        scenariosPanel.defineRowHeaderByKey(HEADER_ROW_GROUP1); // Date header
+        scenariosPanel.defineRowHeaderByKey(HEADER_ROW); // TimeGrain header
+        for (Scenario scenario : meetingSchedule.getScenarioList()) {
+            scenariosPanel.defineRowHeader(scenario);
+        }
+        scenariosPanel.defineRowHeader(null); // Unassigned
     }
 
     private void fillCells(MeetingSchedule meetingSchedule) {
-        roomsPanel
-            .addCornerHeader(HEADER_COLUMN, HEADER_ROW, createTableHeader(new JLabel("Room")));
+        roomsPanel.addCornerHeader(
+            HEADER_COLUMN, HEADER_ROW,
+            createTableHeader(new JLabel("Room")));
         fillRoomCells(meetingSchedule);
-        personsPanel.addCornerHeader(HEADER_COLUMN_GROUP1, HEADER_ROW,
-            createTableHeader(new JLabel("Person")));
+
+        personsPanel.addCornerHeader(
+            HEADER_COLUMN_GROUP1, HEADER_ROW,
+            createTableHeader(new JLabel("User")));
         fillPersonCells(meetingSchedule);
+
+        scenariosPanel.addCornerHeader(
+            HEADER_COLUMN_GROUP2, HEADER_ROW,
+            createTableHeader(new JLabel("Scenario")));
+        fillScenarioCells(meetingSchedule);
+
         fillTimeGrainCells(meetingSchedule);
         fillMeetingAssignmentCells(meetingSchedule);
     }
@@ -129,6 +159,13 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
         }
     }
 
+    private void fillScenarioCells(MeetingSchedule meetingSchedule) {
+        for (Scenario scenario : meetingSchedule.getScenarioList()) {
+            JPanel panel = createTableHeader(new JLabel(scenario.getLabel(), SwingConstants.CENTER));
+            scenariosPanel.addRowHeader(HEADER_COLUMN_GROUP2, scenario, panel);
+        }
+    }
+
     private void fillTimeGrainCells(MeetingSchedule meetingSchedule) {
         Map<Day, TimeGrain> firstTimeGrainMap = new HashMap<>(meetingSchedule.getDayList().size());
         Map<Day, TimeGrain> lastTimeGrainMap = new HashMap<>(meetingSchedule.getDayList().size());
@@ -148,14 +185,20 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
                 createTableHeader(new JLabel(timeGrain.getLabel())));
             personsPanel.addColumnHeader(timeGrain, HEADER_ROW,
                 createTableHeader(new JLabel(timeGrain.getLabel())));
+            scenariosPanel.addColumnHeader(timeGrain, HEADER_ROW,
+                createTableHeader(new JLabel(timeGrain.getLabel())));
         }
         roomsPanel.addColumnHeader(OVERTIME_TIME_GRAIN, HEADER_ROW,
             createTableHeader(new JLabel("Overtime")));
         personsPanel.addColumnHeader(OVERTIME_TIME_GRAIN, HEADER_ROW,
             createTableHeader(new JLabel("Overtime")));
+        scenariosPanel.addColumnHeader(OVERTIME_TIME_GRAIN, HEADER_ROW,
+            createTableHeader(new JLabel("Overtime")));
         roomsPanel.addColumnHeader(null, HEADER_ROW,
             createTableHeader(new JLabel("Unassigned")));
         personsPanel.addColumnHeader(null, HEADER_ROW,
+            createTableHeader(new JLabel("Unassigned")));
+        scenariosPanel.addColumnHeader(null, HEADER_ROW,
             createTableHeader(new JLabel("Unassigned")));
 
         for (Day day : meetingSchedule.getDayList()) {
@@ -167,12 +210,19 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             personsPanel.addColumnHeader(firstTimeGrain, HEADER_ROW_GROUP1, lastTimeGrain,
                 HEADER_ROW_GROUP1,
                 createTableHeader(new JLabel(day.getLabel())));
+            scenariosPanel.addColumnHeader(firstTimeGrain, HEADER_ROW_GROUP1, lastTimeGrain,
+                HEADER_ROW_GROUP1,
+                createTableHeader(new JLabel(day.getLabel())));
 
         }
     }
 
     private void fillMeetingAssignmentCells(MeetingSchedule meetingSchedule) {
         TangoColorFactory tangoColorFactory = new TangoColorFactory();
+
+        Map<Long, Scenario> scenarioIdMap = meetingSchedule.getScenarioList().stream()
+            .collect(toMap(Scenario::getId, s -> s));
+
         for (MeetingAssignment meetingAssignment : meetingSchedule.getMeetingAssignmentList()) {
             Color color = tangoColorFactory.pickColor(meetingAssignment.getMeeting());
             TimeGrain startingTimeGrain = meetingAssignment.getStartingTimeGrain();
@@ -188,7 +238,8 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
                     lastTimeGrain = OVERTIME_TIME_GRAIN;
                 }
             }
-            roomsPanel.addCell(startingTimeGrain, meetingAssignment.getRoom(),
+            roomsPanel.addCell(
+                startingTimeGrain, meetingAssignment.getRoom(),
                 lastTimeGrain, meetingAssignment.getRoom(),
                 createButton(meetingAssignment, color));
 
@@ -202,6 +253,12 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             personsPanel.addCell(
                 startingTimeGrain, patient,
                 lastTimeGrain, patient,
+                createButton(meetingAssignment, color));
+
+            Scenario scenario = scenarioIdMap.get(meetingAssignment.getMeeting().getScenarioId());
+            scenariosPanel.addCell(
+                startingTimeGrain, scenario,
+                lastTimeGrain, scenario,
                 createButton(meetingAssignment, color));
         }
     }
