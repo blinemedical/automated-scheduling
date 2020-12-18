@@ -38,7 +38,7 @@ public class MeetingSchedulingGenerator {
 
         Instant startTime = Instant.parse("2020-12-18T08:00:00.00Z");
         Instant endTime = Instant.parse("2020-12-18T16:00:00.00Z");
-        Duration meetingDuration = Duration.ofHours(1L);
+        Duration meetingDuration = Duration.ofMinutes(GRAIN_LENGTH_IN_MINUTES);
         int meetingDurationInGrains = (int) (meetingDuration.toMinutes() / GRAIN_LENGTH_IN_MINUTES);
 
         generator.writeMeetingSchedule(2, 2, 2, 1, startTime, endTime, meetingDurationInGrains);
