@@ -157,7 +157,6 @@ public class MeetingSchedulingGenerator {
             learner.setPerson(person);
             personList.add(person);
 
-            // person is filled in later
             learnerList.add(learner);
         }
 
@@ -209,7 +208,7 @@ public class MeetingSchedulingGenerator {
         meetingSchedule.getPersonList().addAll(personList);
     }
 
-    private void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
+    public static void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
         List<Attendance> learnerList, int durationInGrains) {
 
         List<Meeting> meetingList = new ArrayList<>();
@@ -221,6 +220,7 @@ public class MeetingSchedulingGenerator {
                     Meeting meeting = new Meeting();
                     meeting.setId(meetingId++);
                     meeting.setDurationInGrains(durationInGrains);
+                    meeting.setScenarioId(scenario.getId());
 
                     meeting.setRequiredLearner(learner);
                     meeting.setRequiredPatient(patient);
@@ -242,7 +242,7 @@ public class MeetingSchedulingGenerator {
         meetingSchedule.setMeetingList(meetingList);
     }
 
-    private void createTimeGrainList(MeetingSchedule meetingSchedule, Instant startTime,
+    public static void createTimeGrainList(MeetingSchedule meetingSchedule, Instant startTime,
         int timeGrainListSize) {
         List<Day> dayList = new ArrayList<>(timeGrainListSize);
         long dayId = 0;
@@ -275,7 +275,7 @@ public class MeetingSchedulingGenerator {
         meetingSchedule.setTimeGrainList(timeGrainList);
     }
 
-    private int[] getStartingMinuteOfDayOptions(Instant startTime, int timeGrainListSize) {
+    public static int[] getStartingMinuteOfDayOptions(Instant startTime, int timeGrainListSize) {
         int[] options = new int[timeGrainListSize];
 
         for (int i = 0; i < timeGrainListSize; i++) {

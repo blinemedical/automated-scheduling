@@ -173,6 +173,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             readHeaderCell("Duration");
             readHeaderCell("Required Learner");
             readHeaderCell("Required Patient");
+            readHeaderCell("Scenario Id");
             readHeaderCell("Day");
             readHeaderCell("Starting time");
             readHeaderCell("Room");
@@ -198,6 +199,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
 
                 List<Attendance> meetingAttendanceList = getAttendanceLists(meeting, personMap,
                     attendanceId);
+                meeting.setScenarioId(Long.parseLong(nextStringCell().getStringCellValue()));
                 attendanceId += meetingAttendanceList.size();
                 attendanceList.addAll(meetingAttendanceList);
 
@@ -217,6 +219,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextRow(false);
             readHeaderCell("Name");
             readHeaderCell("Patients");
+            readHeaderCell("Id");
 
             Map<Long, List<Attendance>> personIdToAttendanceMap = new HashMap<>();
             for (Attendance attendance : solution.getAttendanceList()) {
@@ -241,6 +244,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                             return attendances.stream();
                         })
                         .collect(toList()));
+                scenario.setId((long) nextCell().getNumericCellValue());
                 scenarioList.add(scenario);
             }
             solution.setScenarioList(scenarioList);
@@ -504,15 +508,17 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextRow();
             nextHeaderCell("Name");
             nextHeaderCell("Patients");
+            nextHeaderCell("Id");
+
             for (Scenario scenario : solution.getScenarioList()) {
                 nextRow();
                 nextCell().setCellValue(scenario.getName());
-
                 nextCell().setCellValue(scenario.getPatients().stream()
                     .map(Attendance::getPerson)
                     .map(Person::getId)
                     .map(Object::toString)
                     .collect(joining(COMMA_DELIMITER)));
+                nextCell().setCellValue(scenario.getId());
             }
             autoSizeColumnsWithHeader();
         }
@@ -538,6 +544,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextHeaderCell("Duration");
             nextHeaderCell("Required Learner");
             nextHeaderCell("Required Patient");
+            nextHeaderCell("Scenario Id");
             nextHeaderCell("Day");
             nextHeaderCell("Starting time");
             nextHeaderCell("Room");
@@ -550,6 +557,7 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                     meeting.getDurationInGrains() * TimeGrain.GRAIN_LENGTH_IN_MINUTES);
                 nextCell().setCellValue(meeting.getRequiredLearner().getPerson().getFullName());
                 nextCell().setCellValue(meeting.getRequiredPatient().getPerson().getFullName());
+                nextCell().setCellValue(meeting.getScenarioId().toString());
                 List<MeetingAssignment> meetingAssignmentList = meetingAssignmentMap.get(meeting);
                 if (meetingAssignmentList.size() != 1) {
                     throw new IllegalStateException("Impossible state: the meeting (" + meeting
@@ -909,7 +917,8 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                     .append(meetingAssignment.getMeeting().getDurationInGrains()
                         * TimeGrain.GRAIN_LENGTH_IN_MINUTES)
                     .append(" minutes.\n")
-                    .append("Room: ").append(meetingAssignment.getRoom().getName()).append("\n");
+                    .append("Room: ").append(meetingAssignment.getRoom().getName()).append("\n")
+                    .append("Scenario Id: ").append(meetingAssignment.getMeeting().getScenarioId()).append("\n");
 
                 Indictment<HardMediumSoftScore> indictment = indictmentMap.get(meetingAssignment);
                 if (indictment != null) {

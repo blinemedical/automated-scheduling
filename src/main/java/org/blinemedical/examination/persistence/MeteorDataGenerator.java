@@ -1,6 +1,8 @@
 package org.blinemedical.examination.persistence;
 
 import static org.blinemedical.examination.domain.TimeGrain.GRAIN_LENGTH_IN_MINUTES;
+import static org.blinemedical.examination.persistence.MeetingSchedulingGenerator.createMeetingListAndAttendanceList;
+import static org.blinemedical.examination.persistence.MeetingSchedulingGenerator.createTimeGrainList;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
@@ -20,8 +22,6 @@ import java.io.File;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -29,7 +29,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.blinemedical.examination.app.ExaminationApp;
 import org.blinemedical.examination.domain.Attendance;
-import org.blinemedical.examination.domain.Day;
 import org.blinemedical.examination.domain.Meeting;
 import org.blinemedical.examination.domain.MeetingAssignment;
 import org.blinemedical.examination.domain.MeetingConstraintConfiguration;
@@ -37,7 +36,6 @@ import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
 import org.blinemedical.examination.domain.Room;
 import org.blinemedical.examination.domain.Scenario;
-import org.blinemedical.examination.domain.TimeGrain;
 import org.optaplanner.examples.common.app.CommonApp;
 import org.optaplanner.examples.common.persistence.AbstractSolutionImporter;
 import org.optaplanner.persistence.common.api.domain.solution.SolutionFileIO;
@@ -173,8 +171,7 @@ public class MeteorDataGenerator {
         List<Attendance> learnerList = createLearners(meetingSchedule, learners);
         List<Attendance> patientList = createPatients(meetingSchedule, patients, learnersListSize);
         createScenariosAndAddPatients(meetingSchedule, scenarios, patientList);
-        createMeetingListAndAttendanceList(meetingSchedule, learnerList,
-            durationInGrains);
+        createMeetingListAndAttendanceList(meetingSchedule, learnerList, durationInGrains);
         createTimeGrainList(meetingSchedule, startTime, timeGrainListSize);
         createRoomList(meetingSchedule, rooms);
         createMeetingAssignmentList(meetingSchedule);
@@ -282,86 +279,6 @@ public class MeteorDataGenerator {
         }
 
         meetingSchedule.setScenarioList(scenarioList);
-    }
-
-    private void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
-        List<Attendance> learnerList, int durationInGrains) {
-
-        List<Meeting> meetingList = new ArrayList<>();
-        long meetingId = 0L;
-
-        for (Attendance learner : learnerList) {
-            for (Scenario scenario : meetingSchedule.getScenarioList()) {
-                for (Attendance patient : scenario.getPatients()) {
-                    Meeting meeting = new Meeting();
-                    meeting.setId(meetingId++);
-                    meeting.setDurationInGrains(durationInGrains);
-
-                    meeting.setRequiredLearner(learner);
-                    meeting.setRequiredPatient(patient);
-
-                    learner.setMeeting(meeting);
-                    patient.setMeeting(meeting);
-
-                    logger.trace("Created meeting with durationInGrains ({}),"
-                            + " requiredLearner ({}),"
-                            + " requiredPatient ({}).",
-                        durationInGrains,
-                        learner,
-                        patient);
-                    meetingList.add(meeting);
-                }
-            }
-        }
-
-        meetingSchedule.setMeetingList(meetingList);
-    }
-
-    private void createTimeGrainList(MeetingSchedule meetingSchedule, Instant startTime,
-        int timeGrainListSize) {
-        List<Day> dayList = new ArrayList<>(timeGrainListSize);
-        long dayId = 0;
-        Day day = null;
-        List<TimeGrain> timeGrainList = new ArrayList<>(timeGrainListSize);
-        int[] startingMinuteOfDayOptions = getStartingMinuteOfDayOptions(startTime,
-            timeGrainListSize);
-        for (int i = 0; i < timeGrainListSize; i++) {
-            TimeGrain timeGrain = new TimeGrain();
-            timeGrain.setId((long) i);
-            timeGrain.setGrainIndex(i);
-            int dayOfYear = (i / startingMinuteOfDayOptions.length) + 1;
-            if (day == null || day.getDayOfYear() != dayOfYear) {
-                day = new Day();
-                day.setId(dayId);
-                day.setDayOfYear(dayOfYear);
-                dayId++;
-                dayList.add(day);
-            }
-            timeGrain.setDay(day);
-            int startingMinuteOfDay = startingMinuteOfDayOptions[i
-                % startingMinuteOfDayOptions.length];
-            timeGrain.setStartingMinuteOfDay(startingMinuteOfDay);
-            logger.trace(
-                "Created timeGrain with grainIndex ({}), dayOfYear ({}), startingMinuteOfDay ({}).",
-                i, dayOfYear, startingMinuteOfDay);
-            timeGrainList.add(timeGrain);
-        }
-        meetingSchedule.setDayList(dayList);
-        meetingSchedule.setTimeGrainList(timeGrainList);
-    }
-
-    private int[] getStartingMinuteOfDayOptions(Instant startTime, int timeGrainListSize) {
-        int[] options = new int[timeGrainListSize];
-
-        for (int i = 0; i < timeGrainListSize; i++) {
-            Instant startingTimeOption = startTime.plus(Duration.ofMinutes(
-                (long) GRAIN_LENGTH_IN_MINUTES * i));
-            ZonedDateTime zonedStartingTimeOption = startingTimeOption.atZone(ZoneOffset.UTC);
-            options[i] =
-                zonedStartingTimeOption.getHour() * 60 + zonedStartingTimeOption.getMinute();
-        }
-
-        return options;
     }
 
     private void createRoomList(MeetingSchedule meetingSchedule, JsonArray rooms) {

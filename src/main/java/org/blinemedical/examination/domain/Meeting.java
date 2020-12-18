@@ -9,6 +9,7 @@ public class Meeting extends AbstractPersistable {
 
     private Attendance requiredLearner;
     private Attendance requiredPatient;
+    private Long scenarioId;
 
     public int getDurationInGrains() {
         return durationInGrains;
@@ -32,6 +33,14 @@ public class Meeting extends AbstractPersistable {
 
     public void setRequiredPatient(Attendance requiredPatient) {
         this.requiredPatient = requiredPatient;
+    }
+
+    public Long getScenarioId() {
+        return scenarioId;
+    }
+
+    public void setScenarioId(Long scenarioId) {
+        this.scenarioId = scenarioId;
     }
 
     // ************************************************************************

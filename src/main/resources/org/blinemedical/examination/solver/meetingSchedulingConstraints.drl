@@ -53,13 +53,13 @@ end
 
 rule "Scenario scheduled"
     when
-        $scenario : Scenario($patients : patients)
+        $scenario : Scenario($scenarioId : id)
         MeetingAssignment(
             startingTimeGrain != null,
             room != null,
+            meeting.scenarioId == $scenarioId,
             $meeting : meeting,
             $learner : meeting.requiredLearner.person)
-        Attendance(meeting == $meeting) from $patients
     then
         insertLogical(new AssignedScenarioLearner($scenario, $learner));
 end
