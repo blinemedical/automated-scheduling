@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.blinemedical.examination.app.ExaminationApp;
@@ -284,16 +285,16 @@ public class MeteorDataGenerator {
                 logger.debug("Looking for name ({}), id ({}), in scenario ({}).",
                     patientDataName, patientDataId, scenario.getName());
                 Optional<Attendance> patientToAdd = patientList.stream()
-                    .filter(p -> p.getPerson().getFullName().equalsIgnoreCase(patientDataId))
+                    .filter(p -> p.getPerson().getPersonId().equalsIgnoreCase(patientDataId))
                     .findAny();
 
                 if (patientToAdd.isPresent()) {
                     Attendance patient = patientToAdd.get();
-                    logger.debug("Found, adding patient ({}), to scenario ({}).",
+                    logger.debug("Found patient ({}), adding them to scenario ({}).",
                         patient.getPerson().getFullName(), scenario.getName());
                     scenario.getPatients().add(patient);
                 } else {
-                    logger.error("Did not find ({}) in to scenario ({}).",
+                    logger.error("Did not find patient ({}) in scenario ({}).",
                         patientDataName, scenario.getName());
                 }
             }
