@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -30,6 +31,7 @@ import org.blinemedical.examination.domain.MeetingAssignment;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
 import org.blinemedical.examination.domain.Room;
+import org.blinemedical.examination.domain.Scenario;
 import org.blinemedical.examination.domain.TimeGrain;
 import org.optaplanner.examples.common.swingui.CommonIcons;
 import org.optaplanner.examples.common.swingui.SolutionPanel;
@@ -122,7 +124,7 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
             JPanel panel = createTableHeader(new JLabel(person.getLabel(), SwingConstants.CENTER));
             panel.setBackground(person.isPatient()
                 ? Color.decode("#9EA6D1") // Light blue
-                :  Color.decode("#9ED19E")); // Light green
+                : Color.decode("#9ED19E")); // Light green
             personsPanel.addRowHeader(HEADER_COLUMN_GROUP1, person, panel);
         }
     }
@@ -246,9 +248,26 @@ public class MeetingSchedulingPanel extends SolutionPanel<MeetingSchedule> {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JPanel listFieldsPanel = new JPanel(new GridLayout(3, 2));
-            listFieldsPanel.add(new JLabel("Starting time grain:"));
+            JPanel listFieldsPanel = new JPanel(new GridLayout(6, 2));
+
             MeetingSchedule meetingSchedule = getSolution();
+
+            Meeting meeting = meetingAssignment.getMeeting();
+            Long scenarioId = meeting.getScenarioId();
+            Optional<Scenario> scenario = meetingSchedule.getScenarioList().stream()
+                .filter(s -> s.getId().equals(scenarioId))
+                .findFirst();
+            String scenarioName = scenario.isPresent() ? scenario.get().getName() : "not found";
+
+            listFieldsPanel.add(new JLabel("Scenario"));
+            listFieldsPanel.add(new JLabel(scenarioName));
+            listFieldsPanel.add(new JLabel("Learner"));
+            listFieldsPanel.add(new JLabel(meeting.getRequiredLearner().getPerson().getFullName()));
+            listFieldsPanel.add(new JLabel("Patient"));
+            listFieldsPanel.add(new JLabel(meeting.getRequiredPatient().getPerson().getFullName()));
+
+            listFieldsPanel.add(new JLabel("Starting time grain:"));
+
             List<TimeGrain> timeGrainList = meetingSchedule.getTimeGrainList();
             // Add 1 to array size to add null, which makes the entity unassigned
             JComboBox timeGrainListField = new JComboBox(
