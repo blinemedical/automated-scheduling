@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,7 +75,7 @@ public class MeteorDataGenerator {
         JsonArray patients = el.getAsJsonObject().get("patients").getAsJsonArray();
         JsonArray scenarios = el.getAsJsonObject().get("scenarios").getAsJsonArray();
 
-        scenarios.forEach(scenario -> scenario.getAsJsonObject().add("patients", patients));
+//        scenarios.forEach(scenario -> scenario.getAsJsonObject().add("patients", patients));
 
         generator.writeMeetingSchedule(learners, patients, rooms, scenarios, startTime, endTime,
             meetingDurationInGrains);
@@ -270,6 +271,32 @@ public class MeteorDataGenerator {
             String scenarioName = scenarioData.get("privateTitle").getAsString();
             scenario.setName(scenarioName);
             scenarioId++;
+
+            JsonArray patientsData = scenarioData.get("patients").getAsJsonArray();
+            int patientsPerScenario = patientsData.size();
+            scenario.setPatients(new ArrayList<>());
+
+            for (int patientIdx = 0; patientIdx < patientsPerScenario; patientIdx++) {
+                JsonObject patientData = patientsData.get(patientIdx).getAsJsonObject();
+                String patientDataId = patientData.get("userId").getAsString();
+                String patientDataName = patientData.get("name").getAsString();
+
+                logger.debug("Looking for name ({}), id ({}), in scenario ({}).",
+                    patientDataName, patientDataId, scenario.getName());
+                Optional<Attendance> patientToAdd = patientList.stream()
+                    .filter(p -> p.getPerson().getFullName().equalsIgnoreCase(patientDataId))
+                    .findAny();
+
+                if (patientToAdd.isPresent()) {
+                    Attendance patient = patientToAdd.get();
+                    logger.debug("Found, adding patient ({}), to scenario ({}).",
+                        patient.getPerson().getFullName(), scenario.getName());
+                    scenario.getPatients().add(patient);
+                } else {
+                    logger.error("Did not find ({}) in to scenario ({}).",
+                        patientDataName, scenario.getName());
+                }
+            }
 
             scenario.setPatients(patientList);
 
