@@ -87,7 +87,7 @@ public class MeteorDataGenerator {
         System.out.println("Enter optional courseId:");
 
         String optionalCourseId = myObj.nextLine();  // Read user input
-        if (optionalCourseId != "") {
+        if (!optionalCourseId.equals("")) {
             courseId = optionalCourseId;
         }
         logger.debug("Using courseId: ({})", courseId);
