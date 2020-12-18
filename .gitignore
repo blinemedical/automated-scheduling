@@ -91,3 +91,5 @@ data/examination/old/
 
 # Mac file
 .DS_Store
+
+.config

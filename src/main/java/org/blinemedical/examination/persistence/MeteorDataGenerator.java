@@ -19,7 +19,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -28,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Scanner;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.blinemedical.examination.app.ExaminationApp;
@@ -50,6 +54,34 @@ public class MeteorDataGenerator {
     static JsonFactory JSON_FACTORY = new JacksonFactory();
 
     public static void main(String[] args) throws IOException {
+        //String DATA_DIR_SYSTEM_PROPERTY = "org.optaplanner.examples.dataDir";
+        //File configFile = new File(System.getProperty(DATA_DIR_SYSTEM_PROPERTY, "/"), ".config");
+        File configFile = new File(".config");
+        String courseId = "";
+        String token = "";
+        try {
+            Scanner myReader = new Scanner(configFile);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                logger.debug("data line: ({})", data);
+                if (data.contains("token=")) {
+                    token = data.replace("token=", "");
+                } else if(data.contains("courseId=")) {
+                    courseId = data.replace("courseId=", "");
+                }
+            }
+            myReader.close();
+            if (token == "") {
+                throw new Exception("missing token");
+            }
+        } catch (FileNotFoundException e) {
+            logger.debug("Config not found ({})", configFile.toString());
+        } catch (Exception e) {
+            logger.debug("Error ({})", e.getMessage());
+        }
+        if (token == "") {
+            return; //failed to get token from config, exit
+        }
         MeteorDataGenerator generator = new MeteorDataGenerator();
 
         Instant startTime = Instant.parse("2020-12-18T08:00:00.00Z");
@@ -57,12 +89,8 @@ public class MeteorDataGenerator {
         Duration meetingDuration = Duration.ofHours(1L);
         int meetingDurationInGrains = (int) (meetingDuration.toMinutes() / GRAIN_LENGTH_IN_MINUTES);
 
-        HttpRequestFactory requestFactory
-            = HTTP_TRANSPORT.createRequestFactory(
-            (HttpRequest request) -> {
-                request.setParser(new JsonObjectParser(JSON_FACTORY));
-            });
-        String token = "ba90383942681f06cd2f9da85c67cd1a73072fe1dd274c8fb3da27c863b77d5be918b1a8d9033d5543ea20e9e8e548d0da87584bda9f4c01419ca3f9ab7349e8dc2457cdc8475fb77f0be28195586c0f0a1997c03280d06705ed5d475a624b1e33ac200e0b3dfb2da56d4c5b98444725:%242b%2410%24w.Njat.T2kVk5CmHzNMDl.2WHPLOdYFJ%2F70utd.RBGydrF%2FaFlD1O";
+        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
+            (HttpRequest request) -> request.setParser(new JsonObjectParser(JSON_FACTORY)));
         HttpHeaders headers = new HttpHeaders();
         headers.set("token", token);
 
@@ -83,19 +111,21 @@ public class MeteorDataGenerator {
         generator.writeMeetingSchedule(learners, patients, rooms, scenarios, startTime, endTime,
             meetingDurationInGrains);
 
-        // course only
-        HttpRequest request2 = requestFactory.buildGetRequest(new GenericUrl(
-            "http://localhost:8080/api/sample-data?courseId=5416a76a-dfa8-45c6-ba82-bcce62821571"))
-            .setHeaders(headers);
-        HttpResponse response2 = request2.execute();
+        if (courseId != "") {
+            // course only
+            HttpRequest request2 = requestFactory.buildGetRequest(new GenericUrl(
+                "http://localhost:8080/api/sample-data?courseId=" + courseId))
+                .setHeaders(headers);
+            HttpResponse response2 = request2.execute();
 
-        JsonElement el2 = JsonParser.parseString(response2.parseAsString());
-        JsonArray courseRooms = el2.getAsJsonObject().get("rooms").getAsJsonArray();
-        JsonArray courseLearners = el2.getAsJsonObject().get("learners").getAsJsonArray();
-        JsonArray coursePatients = el2.getAsJsonObject().get("patients").getAsJsonArray();
-        JsonArray courseScenarios = el2.getAsJsonObject().get("scenarios").getAsJsonArray();
-        generator.writeMeetingSchedule(courseLearners, coursePatients, courseRooms, courseScenarios,
-            startTime, endTime, meetingDurationInGrains);
+            JsonElement el2 = JsonParser.parseString(response2.parseAsString());
+            JsonArray courseRooms = el2.getAsJsonObject().get("rooms").getAsJsonArray();
+            JsonArray courseLearners = el2.getAsJsonObject().get("learners").getAsJsonArray();
+            JsonArray coursePatients = el2.getAsJsonObject().get("patients").getAsJsonArray();
+            JsonArray courseScenarios = el2.getAsJsonObject().get("scenarios").getAsJsonArray();
+            generator.writeMeetingSchedule(courseLearners, coursePatients, courseRooms, courseScenarios,
+                startTime, endTime, meetingDurationInGrains);
+        }
     }
 
     protected final SolutionFileIO<MeetingSchedule> solutionFileIO;
