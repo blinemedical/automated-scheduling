@@ -3,12 +3,14 @@ package org.blinemedical.examination.solver;
 
 import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScoreHolder;
 
+import org.blinemedical.examination.domain.AssignedScenarioLearner;
 import org.blinemedical.examination.domain.Attendance;
 import org.blinemedical.examination.domain.Meeting;
 import org.blinemedical.examination.domain.MeetingAssignment;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
 import org.blinemedical.examination.domain.Room;
+import org.blinemedical.examination.domain.Scenario;
 import org.blinemedical.examination.domain.TimeGrain;
 
 global HardMediumSoftScoreHolder scoreHolder;
@@ -49,9 +51,26 @@ end
 // Medium constraints
 // ############################################################################
 
+rule "Scenario scheduled"
+    when
+        $scenario : Scenario($patients : patients)
+        MeetingAssignment(
+            startingTimeGrain != null,
+            room != null,
+            $meeting : meeting,
+            $learner : meeting.requiredLearner.person)
+        Attendance(meeting == $meeting) from $patients
+    then
+        insertLogical(new AssignedScenarioLearner($scenario, $learner));
+end
+
 rule "Assigned meetings"
     when
-        MeetingAssignment(startingTimeGrain != null, room != null)
+        $scenario : Scenario()
+        $learner : Person(!patient)
+        exists AssignedScenarioLearner(
+            $scenario == scenario,
+            $learner == learner)
     then
         scoreHolder.reward(kcontext);
 end
