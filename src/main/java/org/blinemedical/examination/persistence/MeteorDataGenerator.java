@@ -71,7 +71,7 @@ public class MeteorDataGenerator {
                 }
             }
             myReader.close();
-            if (token == "") {
+            if (token.equals("")) {
                 throw new Exception("missing token");
             }
         } catch (FileNotFoundException e) {
@@ -79,7 +79,7 @@ public class MeteorDataGenerator {
         } catch (Exception e) {
             logger.debug("Error ({})", e.getMessage());
         }
-        if (token == "") {
+        if (token.equals("")) {
             return; //failed to get token from config, exit
         }
 
@@ -122,7 +122,7 @@ public class MeteorDataGenerator {
         generator.writeMeetingSchedule(learners, patients, rooms, scenarios, startTime, endTime,
             meetingDurationInGrains, "allCourses");
 
-        if (courseId != "") {
+        if (!courseId.equals("")) {
             // course only
             HttpRequest request2 = requestFactory.buildGetRequest(new GenericUrl(
                 "http://localhost:8080/api/sample-data?courseId=" + courseId))

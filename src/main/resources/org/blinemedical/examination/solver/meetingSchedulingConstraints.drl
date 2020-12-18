@@ -95,14 +95,6 @@ rule "Do all meetings as soon as possible"
         scoreHolder.penalize(kcontext, $lastTimeGrainIndex);
 end
 
-rule "One TimeGrain break between two consecutive meetings"
-    when
-        MeetingAssignment(startingTimeGrain != null,  $leftEnd : getLastTimeGrainIndex())
-        MeetingAssignment(startingTimeGrain != null, $leftEnd == startingTimeGrain.getGrainIndex() - 1)
-    then
-        scoreHolder.penalize(kcontext);
-end
-
 rule "Overlapping meetings"
     when
         $leftAssignment : MeetingAssignment(startingTimeGrain != null, room != null, $leftRoom : room)

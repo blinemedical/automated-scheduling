@@ -7,7 +7,7 @@ import org.optaplanner.examples.common.domain.AbstractPersistable;
 
 @ConstraintConfiguration(constraintPackage = "org.blinemedical.examination.solver")
 public class MeetingConstraintConfiguration extends AbstractPersistable {
-
+    // Drools rule names
     public static final String ROOM_CONFLICT = "Room conflict";
     public static final String DONT_GO_IN_OVERTIME = "Don't go in overtime";
     public static final String REQUIRED_ATTENDANCE_CONFLICT = "Required attendance conflict";
@@ -16,10 +16,20 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public static final String HALF_ASSIGNED_MEETINGS = "Half assigned meetings";
 
     public static final String DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE = "Do all meetings as soon as possible";
-    public static final String ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS =
-        "One TimeGrain break between two consecutive meetings";
     public static final String OVERLAPPING_MEETINGS = "Overlapping meetings";
     public static final String ROOM_STABILITY = "Room stability";
+
+    // Descriptions
+    public static final String ROOM_CONFLICT_DESCRIPTION = "Two meetings must not use the same room at the same time.";
+    public static final String DONT_GO_IN_OVERTIME_DESCRIPTION  = "Meetings should start and end within the specified time window for the day";
+    public static final String REQUIRED_ATTENDANCE_CONFLICT_DESCRIPTION  = "A person cannot have two required meetings at the same time.";
+
+    public static final String ASSIGNED_MEETINGS_DESCRIPTION  = "Assign one meeting per Learner-Scenario combination";
+    public static final String HALF_ASSIGNED_MEETINGS_DESCRIPTION  = "Do not assign only a room or only a time grain to meetings. They should be fully assigned or completely unassigned";
+
+    public static final String DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE_DESCRIPTION  = "Schedule all meetings as soon as possible.";
+    public static final String OVERLAPPING_MEETINGS_DESCRIPTION  = "To minimize the number of meetings in parallel so people don’t have to choose one meeting over the other.";
+    public static final String ROOM_STABILITY_DESCRIPTION  = "If a person has two consecutive meetings with two or less time grains break between them they better be in the same room.";
 
     // Hard
     @ConstraintWeight(ROOM_CONFLICT)
@@ -38,9 +48,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     // Soft
     @ConstraintWeight(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE)
     private HardMediumSoftScore doAllMeetingsAsSoonAsPossible = HardMediumSoftScore.ofSoft(1);
-    @ConstraintWeight(ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS)
-    private HardMediumSoftScore oneTimeGrainBreakBetweenTwoConsecutiveMeetings = HardMediumSoftScore
-        .ofSoft(0);
     @ConstraintWeight(OVERLAPPING_MEETINGS)
     private HardMediumSoftScore overlappingMeetings = HardMediumSoftScore.ofSoft(10);
     @ConstraintWeight(ROOM_STABILITY)
@@ -88,15 +95,6 @@ public class MeetingConstraintConfiguration extends AbstractPersistable {
     public void setDoAllMeetingsAsSoonAsPossible(
         HardMediumSoftScore doAllMeetingsAsSoonAsPossible) {
         this.doAllMeetingsAsSoonAsPossible = doAllMeetingsAsSoonAsPossible;
-    }
-
-    public HardMediumSoftScore getOneTimeGrainBreakBetweenTwoConsecutiveMeetings() {
-        return oneTimeGrainBreakBetweenTwoConsecutiveMeetings;
-    }
-
-    public void setOneTimeGrainBreakBetweenTwoConsecutiveMeetings(
-        HardMediumSoftScore oneTimeGrainBreakBetweenTwoConsecutiveMeetings) {
-        this.oneTimeGrainBreakBetweenTwoConsecutiveMeetings = oneTimeGrainBreakBetweenTwoConsecutiveMeetings;
     }
 
     public HardMediumSoftScore getOverlappingMeetings() {

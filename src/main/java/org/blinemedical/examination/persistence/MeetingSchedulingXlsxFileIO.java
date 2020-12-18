@@ -5,14 +5,21 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGNED_MEETINGS;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ASSIGNED_MEETINGS_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DONT_GO_IN_OVERTIME;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DONT_GO_IN_OVERTIME_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.HALF_ASSIGNED_MEETINGS;
-import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.HALF_ASSIGNED_MEETINGS_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.OVERLAPPING_MEETINGS;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.OVERLAPPING_MEETINGS_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.REQUIRED_ATTENDANCE_CONFLICT;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.REQUIRED_ATTENDANCE_CONFLICT_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_CONFLICT;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_CONFLICT_DESCRIPTION;
 import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_STABILITY;
+import static org.blinemedical.examination.domain.MeetingConstraintConfiguration.ROOM_STABILITY_DESCRIPTION;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -108,36 +115,38 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             // Hard
             readIntConstraintParameterLine(ROOM_CONFLICT,
                 hardScore -> constraintConfiguration
-                    .setRoomConflict(HardMediumSoftScore.ofHard(hardScore)), "");
+                    .setRoomConflict(HardMediumSoftScore.ofHard(hardScore)),
+                ROOM_CONFLICT_DESCRIPTION);
             readIntConstraintParameterLine(DONT_GO_IN_OVERTIME,
                 hardScore -> constraintConfiguration
-                    .setDontGoInOvertime(HardMediumSoftScore.ofHard(hardScore)), "");
+                    .setDontGoInOvertime(HardMediumSoftScore.ofHard(hardScore)),
+                DONT_GO_IN_OVERTIME_DESCRIPTION);
             readIntConstraintParameterLine(REQUIRED_ATTENDANCE_CONFLICT,
                 hardScore -> constraintConfiguration
                     .setRequiredAttendanceConflict(HardMediumSoftScore.ofHard(hardScore)),
-                "");
+                REQUIRED_ATTENDANCE_CONFLICT_DESCRIPTION);
             // Medium
             readIntConstraintParameterLine(ASSIGNED_MEETINGS,
                 mediumScore -> constraintConfiguration
-                    .setAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)), "");
+                    .setAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)),
+                ASSIGNED_MEETINGS_DESCRIPTION);
             readIntConstraintParameterLine(HALF_ASSIGNED_MEETINGS,
                 mediumScore -> constraintConfiguration
-                    .setHalfAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)), "");
+                    .setHalfAssignedMeetings(HardMediumSoftScore.ofMedium(mediumScore)),
+                HALF_ASSIGNED_MEETINGS_DESCRIPTION);
             // Soft
             readIntConstraintParameterLine(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
                 softScore -> constraintConfiguration
-                    .setDoAllMeetingsAsSoonAsPossible(HardMediumSoftScore.ofSoft(softScore)), "");
-            readIntConstraintParameterLine(ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
-                softScore -> constraintConfiguration
-                    .setOneTimeGrainBreakBetweenTwoConsecutiveMeetings(
-                        HardMediumSoftScore.ofSoft(softScore)),
-                "");
+                    .setDoAllMeetingsAsSoonAsPossible(HardMediumSoftScore.ofSoft(softScore)),
+                DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE_DESCRIPTION);
             readIntConstraintParameterLine(OVERLAPPING_MEETINGS,
                 softScore -> constraintConfiguration
-                    .setOverlappingMeetings(HardMediumSoftScore.ofSoft(softScore)), "");
+                    .setOverlappingMeetings(HardMediumSoftScore.ofSoft(softScore)),
+                OVERLAPPING_MEETINGS_DESCRIPTION);
             readIntConstraintParameterLine(ROOM_STABILITY,
                 softScore -> constraintConfiguration
-                    .setRoomStability(HardMediumSoftScore.ofSoft(softScore)), "");
+                    .setRoomStability(HardMediumSoftScore.ofSoft(softScore)),
+                ROOM_STABILITY_DESCRIPTION);
 
             solution.setConstraintConfiguration(constraintConfiguration);
         }
@@ -474,31 +483,35 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             // TODO refactor this to allow setting pos/neg, weight and score level
             // Hard
             writeIntConstraintParameterLine(ROOM_CONFLICT,
-                constraintConfiguration.getRoomConflict().getHardScore(), "");
+                constraintConfiguration.getRoomConflict().getHardScore(),
+                ROOM_CONFLICT_DESCRIPTION);
             writeIntConstraintParameterLine(DONT_GO_IN_OVERTIME,
                 constraintConfiguration.getDontGoInOvertime().getHardScore(),
-                "");
+                DONT_GO_IN_OVERTIME_DESCRIPTION);
             writeIntConstraintParameterLine(REQUIRED_ATTENDANCE_CONFLICT,
-                constraintConfiguration.getRequiredAttendanceConflict().getHardScore(), "");
+                constraintConfiguration.getRequiredAttendanceConflict().getHardScore(),
+                REQUIRED_ATTENDANCE_CONFLICT_DESCRIPTION);
             nextRow();
 
             // Medium
             writeIntConstraintParameterLine(ASSIGNED_MEETINGS,
-                constraintConfiguration.getHalfAssignedMeetings().getMediumScore(), "");
+                constraintConfiguration.getHalfAssignedMeetings().getMediumScore(),
+                ASSIGNED_MEETINGS_DESCRIPTION);
             writeIntConstraintParameterLine(HALF_ASSIGNED_MEETINGS,
-                constraintConfiguration.getAssignedMeetings().getMediumScore(), "");
+                constraintConfiguration.getAssignedMeetings().getMediumScore(),
+                HALF_ASSIGNED_MEETINGS_DESCRIPTION);
             nextRow();
 
             // Soft
             writeIntConstraintParameterLine(DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
-                constraintConfiguration.getDoAllMeetingsAsSoonAsPossible().getSoftScore(), "");
-            writeIntConstraintParameterLine(ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
-                constraintConfiguration.getOneTimeGrainBreakBetweenTwoConsecutiveMeetings()
-                    .getSoftScore(), "");
+                constraintConfiguration.getDoAllMeetingsAsSoonAsPossible().getSoftScore(),
+                DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE_DESCRIPTION);
             writeIntConstraintParameterLine(OVERLAPPING_MEETINGS,
-                constraintConfiguration.getOverlappingMeetings().getSoftScore(), "");
+                constraintConfiguration.getOverlappingMeetings().getSoftScore(),
+                OVERLAPPING_MEETINGS_DESCRIPTION);
             writeIntConstraintParameterLine(ROOM_STABILITY,
-                constraintConfiguration.getRoomStability().getSoftScore(), "");
+                constraintConfiguration.getRoomStability().getSoftScore(),
+                ROOM_STABILITY_DESCRIPTION);
 
             autoSizeColumnsWithHeader();
         }
@@ -766,7 +779,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 HALF_ASSIGNED_MEETINGS,
 
                 DO_ALL_MEETINGS_AS_SOON_AS_POSSIBLE,
-                ONE_TIME_GRAIN_BREAK_BETWEEN_TWO_CONSECUTIVE_MEETINGS,
                 OVERLAPPING_MEETINGS,
                 ROOM_STABILITY
             };
@@ -910,6 +922,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             List<MeetingAssignment> meetingAssignmentList) {
             StringBuilder commentString = new StringBuilder(meetingAssignmentList.size() * 200);
             for (MeetingAssignment meetingAssignment : meetingAssignmentList) {
+
+                String roomName =meetingAssignment.getRoom() == null ? "" : meetingAssignment.getRoom().getName();
+
                 commentString.append("Date and Time: ")
                     .append(meetingAssignment.getStartingTimeGrain().getDateTimeString())
                     .append("\n")
@@ -917,8 +932,9 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                     .append(meetingAssignment.getMeeting().getDurationInGrains()
                         * TimeGrain.GRAIN_LENGTH_IN_MINUTES)
                     .append(" minutes.\n")
-                    .append("Room: ").append(meetingAssignment.getRoom().getName()).append("\n")
-                    .append("Scenario Id: ").append(meetingAssignment.getMeeting().getScenarioId()).append("\n");
+                    .append("Room: ").append(roomName).append("\n")
+                    .append("Scenario Id: ").append(meetingAssignment.getMeeting().getScenarioId())
+                    .append("\n");
 
                 Indictment<HardMediumSoftScore> indictment = indictmentMap.get(meetingAssignment);
                 if (indictment != null) {
