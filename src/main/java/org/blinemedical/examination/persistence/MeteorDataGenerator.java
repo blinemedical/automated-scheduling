@@ -82,6 +82,17 @@ public class MeteorDataGenerator {
         if (token == "") {
             return; //failed to get token from config, exit
         }
+
+        Scanner myObj = new Scanner(System.in);  // Create a Scanner object
+        System.out.println("Enter optional courseId:");
+
+        String optionalCourseId = myObj.nextLine();  // Read user input
+        if (optionalCourseId != "") {
+            courseId = optionalCourseId;
+        }
+        logger.debug("Using courseId: ({})", courseId);
+        
+        
         MeteorDataGenerator generator = new MeteorDataGenerator();
 
         Instant startTime = Instant.parse("2020-12-18T08:00:00.00Z");
@@ -109,7 +120,7 @@ public class MeteorDataGenerator {
         JsonArray scenarios = el.getAsJsonObject().get("scenarios").getAsJsonArray();
 
         generator.writeMeetingSchedule(learners, patients, rooms, scenarios, startTime, endTime,
-            meetingDurationInGrains);
+            meetingDurationInGrains, "allCourses");
 
         if (courseId != "") {
             // course only
@@ -124,7 +135,7 @@ public class MeteorDataGenerator {
             JsonArray coursePatients = el2.getAsJsonObject().get("patients").getAsJsonArray();
             JsonArray courseScenarios = el2.getAsJsonObject().get("scenarios").getAsJsonArray();
             generator.writeMeetingSchedule(courseLearners, coursePatients, courseRooms, courseScenarios,
-                startTime, endTime, meetingDurationInGrains);
+                startTime, endTime, meetingDurationInGrains, "course-" + courseId);
         }
     }
 
@@ -140,7 +151,8 @@ public class MeteorDataGenerator {
 
     private void writeMeetingSchedule(JsonArray learners, JsonArray patients, JsonArray rooms,
         JsonArray scenarios, Instant startTime,
-        Instant endTime, int durationInGrains) {
+        Instant endTime, int durationInGrains,
+        String fileNameSuffix) {
         int roomListSize = rooms.size();
         int learnersListSize = learners.size();
         int patientsListSize = patients.size();
@@ -152,7 +164,8 @@ public class MeteorDataGenerator {
             learnersListSize,
             patientsListSize,
             roomListSize,
-            scenarioListSize);
+            scenarioListSize,
+            fileNameSuffix);
         File outputFile = new File(outputDir,
             fileName + "." + solutionFileIO.getOutputFileExtension());
         MeetingSchedule meetingSchedule = createMeetingSchedule(
@@ -169,12 +182,13 @@ public class MeteorDataGenerator {
     }
 
     private String determineFileName(int learnersListSize, int patientsListSize, int roomListSize,
-        int scenarioListSize) {
+        int scenarioListSize, String suffix) {
         return "MET-"
             + learnersListSize + "L-"
             + scenarioListSize + "SC-"
             + patientsListSize + "SP-"
-            + roomListSize + "R";
+            + roomListSize + "R"
+            + "-" + suffix;
     }
 
     public MeetingSchedule createMeetingSchedule(
