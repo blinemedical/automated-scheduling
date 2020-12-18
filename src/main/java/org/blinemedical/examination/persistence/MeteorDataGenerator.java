@@ -23,6 +23,7 @@ import org.blinemedical.examination.domain.MeetingConstraintConfiguration;
 import org.blinemedical.examination.domain.MeetingSchedule;
 import org.blinemedical.examination.domain.Person;
 import org.blinemedical.examination.domain.Room;
+import org.blinemedical.examination.domain.Scenario;
 import org.blinemedical.examination.domain.TimeGrain;
 import org.optaplanner.examples.common.app.CommonApp;
 import org.optaplanner.examples.common.persistence.AbstractSolutionImporter;
@@ -66,7 +67,7 @@ public class MeteorDataGenerator {
         String token = "ba90383942681f06cd2f9da85c67cd1a73072fe1dd274c8fb3da27c863b77d5be918b1a8d9033d5543ea20e9e8e548d0da87584bda9f4c01419ca3f9ab7349e82fd6632c0abc548fca7d5f063806fe43ea9d07156168e8bc9c4e76bb847a50f883d438b762065b9a33d1bae3b9779a2b:%242b%2410%24Lo9e7x7wSTb94l6smLY5N.UF.WlJVRh4QuBl78gfifbc2mjc3WIdC";
         HttpHeaders headers = new HttpHeaders();
         headers.set("token", token);
-        
+
         // all users
         HttpRequest request = requestFactory.buildGetRequest(new GenericUrl("http://localhost:8080/api/sample-data")).setHeaders(headers);
         HttpResponse response = request.execute();
@@ -77,8 +78,9 @@ public class MeteorDataGenerator {
 
         JsonArray learners = el.getAsJsonObject().get("learners").getAsJsonArray();
         JsonArray patients = el.getAsJsonObject().get("patients").getAsJsonArray();
+        JsonArray scenarios = el.getAsJsonObject().get("scenarios").getAsJsonArray();
 
-        generator.writeMeetingSchedule(learners, patients, rooms, startTime, endTime, meetingDurationInGrains);
+        generator.writeMeetingSchedule(learners, patients, rooms, scenarios, startTime, endTime, meetingDurationInGrains);
 
 
         // course only
@@ -89,7 +91,8 @@ public class MeteorDataGenerator {
         JsonArray courseRooms = el2.getAsJsonObject().get("rooms").getAsJsonArray();
         JsonArray courseLearners = el2.getAsJsonObject().get("learners").getAsJsonArray();
         JsonArray coursePatients = el2.getAsJsonObject().get("patients").getAsJsonArray();
-        generator.writeMeetingSchedule(courseLearners, coursePatients, courseRooms, startTime, endTime, meetingDurationInGrains);
+        JsonArray courseScenarios = el2.getAsJsonObject().get("scenarios").getAsJsonArray();
+        generator.writeMeetingSchedule(courseLearners, coursePatients, courseRooms, courseScenarios, startTime, endTime, meetingDurationInGrains);
     }
 
     protected final SolutionFileIO<MeetingSchedule> solutionFileIO;
@@ -102,44 +105,72 @@ public class MeteorDataGenerator {
         outputDir = new File(CommonApp.determineDataDir(ExaminationApp.DATA_DIR_NAME), "unsolved");
     }
 
-    private void writeMeetingSchedule(JsonArray learners, JsonArray patients, JsonArray rooms, Instant startTime,
+    private void writeMeetingSchedule(JsonArray learners, JsonArray patients, JsonArray rooms, JsonArray scenarios, Instant startTime,
         Instant endTime, int durationInGrains) {
         int roomListSize = rooms.size();
         int learnersListSize = learners.size();
         int patientsListSize = patients.size();
+        int scenarioListSize = scenarios.size();
         Duration meetingDuration = Duration.between(startTime, endTime);
         int timeGrainListSize = (int) meetingDuration.dividedBy(GRAIN_LENGTH_IN_MINUTES)
             .toMinutes();
 
-        String fileName = determineFileName(learnersListSize, patientsListSize, roomListSize);
+        String fileName = determineFileName(
+            learnersListSize,
+            patientsListSize,
+            roomListSize,
+            scenarioListSize);
         File outputFile = new File(outputDir,
             fileName + "." + solutionFileIO.getOutputFileExtension());
-        MeetingSchedule meetingSchedule = createMeetingSchedule(fileName, learners, patients,
-            startTime, timeGrainListSize, rooms, durationInGrains);
+        MeetingSchedule meetingSchedule = createMeetingSchedule(
+            fileName,
+            learners,
+            patients,
+            startTime,
+            timeGrainListSize,
+            rooms,
+            scenarios,
+            durationInGrains);
         solutionFileIO.write(meetingSchedule, outputFile);
         logger.info("Saved: {}", outputFile);
     }
 
-    private String determineFileName(int learnersListSize, int patientsListSize, int roomListSize) {
+    private String determineFileName(int learnersListSize, int patientsListSize, int roomListSize, int scenarioListSize) {
         return learnersListSize + "L-"
+            + scenarioListSize + "SC-"
             + patientsListSize + "SP-"
             + roomListSize + "R";
     }
 
-    public MeetingSchedule createMeetingSchedule(String fileName, JsonArray learners, JsonArray patients,
-        Instant startTime, int timeGrainListSize,
-        JsonArray rooms, int durationInGrains) {
-        random = new Random(37);
+    public MeetingSchedule createMeetingSchedule(
+        String fileName,
+        JsonArray learners,
+        JsonArray patients,
+        Instant startTime,
+        int timeGrainListSize,
+        JsonArray rooms,
+        JsonArray scenarios,
+        int durationInGrains) {
+
         int roomListSize = rooms.size();
         int learnersListSize = learners.size();
         int patientsListSize = patients.size();
+        int numScenarios = scenarios.size();
+
+        random = new Random(37);
         MeetingSchedule meetingSchedule = new MeetingSchedule();
         meetingSchedule.setId(0L);
         MeetingConstraintConfiguration constraintConfiguration = new MeetingConstraintConfiguration();
         constraintConfiguration.setId(0L);
         meetingSchedule.setConstraintConfiguration(constraintConfiguration);
 
-        createMeetingListAndAttendanceList(meetingSchedule, learners, patients, durationInGrains);
+        meetingSchedule.setAttendanceList(new ArrayList<>());
+        meetingSchedule.setPersonList(new ArrayList<>());
+
+        List<Attendance> learnerList = createLearners(meetingSchedule, learners);
+        createScenariosAndPatients(meetingSchedule, learnersListSize, scenarios);
+        createMeetingListAndAttendanceList(meetingSchedule, learnerList,
+            durationInGrains);
         createTimeGrainList(meetingSchedule, startTime, timeGrainListSize);
         createRoomList(meetingSchedule, rooms);
         createMeetingAssignmentList(meetingSchedule);
@@ -148,9 +179,10 @@ public class MeteorDataGenerator {
             .valueOf((long) timeGrainListSize * roomListSize)
             .pow(meetingSchedule.getMeetingAssignmentList().size());
         logger.info(
-            "MeetingSchedule {} has {} learners, {} patients, {} timeGrains and {} rooms with a search space of {}.",
+            "MeetingSchedule {} has {} learners, {} scenarios, {} total patients, {} timeGrains and {} rooms with a search space of {}.",
             fileName,
             learnersListSize,
+            numScenarios,
             patientsListSize,
             timeGrainListSize,
             roomListSize,
@@ -158,21 +190,15 @@ public class MeteorDataGenerator {
         return meetingSchedule;
     }
 
-    private void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
-        JsonArray learners, JsonArray patients, int durationInGrains) {
-
+    private List<Attendance> createLearners(MeetingSchedule meetingSchedule, JsonArray learners) {
         int learnersListSize = learners.size();
-        int patientsListSize = patients.size();
 
-        List<Meeting> meetingList = new ArrayList<>(); // TODO instantiate with capacity
         List<Attendance> learnerList = new ArrayList<>(learnersListSize);
-        List<Attendance> patientList = new ArrayList<>(patientsListSize);
-        List<Attendance> globalAttendanceList = new ArrayList<>();
         List<Person> personList = new ArrayList<>();
 
         long attendanceId = 0L;
         long personId = 0L;
-        long meetingId = 0L;
+
         for (int learnerIdx = 0; learnerIdx < learnersListSize; learnerIdx++) {
             Attendance learner = new Attendance();
             learner.setId(attendanceId);
@@ -184,50 +210,96 @@ public class MeteorDataGenerator {
             personList.add(person);
 
             // person is filled in later
-            globalAttendanceList.add(learner);
             learnerList.add(learner);
         }
 
-        for (int patientIdx = 0; patientIdx < patientsListSize; patientIdx++) {
-            Attendance patient = new Attendance();
-            patient.setId(attendanceId);
-            attendanceId++;
+        meetingSchedule.getAttendanceList().addAll(learnerList);
+        meetingSchedule.getPersonList().addAll(personList);
 
-            Person person = createPerson(personId++, patients.get(patientIdx).getAsJsonObject());
-            person.setPatient(true);
-            patient.setPerson(person);
-            personList.add(person);
+        return learnerList;
+    }
 
-            // person is filled in later
-            globalAttendanceList.add(patient);
-            patientList.add(patient);
+    private void createScenariosAndPatients(
+        MeetingSchedule meetingSchedule,
+        int learnersListSize,
+        JsonArray scenarios) {
+        int numScenarios = scenarios.size();
+
+        List<Scenario> scenarioList = new ArrayList<>(numScenarios);
+        List<Attendance> patientList = new ArrayList<>();
+        List<Person> personList = new ArrayList<>();
+
+        long scenarioId = 0L;
+        long attendanceId = learnersListSize;
+        long personId = learnersListSize;
+
+        for (int scenarioIdx = 0; scenarioIdx < numScenarios; scenarioIdx++) {
+            JsonObject scenarioData = scenarios.get(scenarioIdx).getAsJsonObject();
+            Scenario scenario = new Scenario();
+            scenario.setId(scenarioId);
+            String scenarioName = scenarioData.get("privateTitle").getAsString();
+            scenario.setName(scenarioName);
+            scenarioId++;
+
+            JsonArray patients = scenarioData.get("patients").getAsJsonArray();
+            int patientsPerScenario = patients.size();
+            patientList = new ArrayList<>(numScenarios * patientsPerScenario);
+            scenario.setPatients(new ArrayList<>());
+
+            for (int patientIdx = 0; patientIdx < patientsPerScenario; patientIdx++) {
+                Attendance patient = new Attendance();
+                patient.setId(attendanceId++);
+
+                Person person = createPerson(personId++, patients.get(patientIdx).getAsJsonObject());
+                person.setPatient(true);
+                patient.setPerson(person);
+                personList.add(person);
+
+                patientList.add(patient);
+                scenario.getPatients().add(patient);
+            }
+
+            scenarioList.add(scenario);
+            logger.trace("Created scenario with name ({}) and ({}) patients.",
+                scenario.getName(), scenario.getPatients().size());
         }
 
-        for (Attendance learner : learnerList) {
-            for (Attendance patient : patientList) {
-                Meeting meeting = new Meeting();
-                meeting.setId(meetingId++);
-                meeting.setDurationInGrains(durationInGrains);
+        meetingSchedule.setScenarioList(scenarioList);
+        meetingSchedule.getAttendanceList().addAll(patientList);
+        meetingSchedule.getPersonList().addAll(personList);
+    }
 
-                meeting.setRequiredLearner(learner);
-                meeting.setRequiredPatient(patient);
+    private void createMeetingListAndAttendanceList(MeetingSchedule meetingSchedule,
+        List<Attendance> learnerList, int durationInGrains) {
 
-                learner.setMeeting(meeting);
-                patient.setMeeting(meeting);
+        List<Meeting> meetingList = new ArrayList<>();
+        long meetingId = 0L;
 
-                logger.trace("Created meeting with durationInGrains ({}),"
-                        + " requiredLearner ({}),"
-                        + " requiredPatient ({}).",
-                    durationInGrains,
-                    learner,
-                    patient);
-                meetingList.add(meeting);
+        for(Attendance learner : learnerList) {
+            for(Scenario scenario : meetingSchedule.getScenarioList()) {
+                for(Attendance patient : scenario.getPatients()) {
+                    Meeting meeting = new Meeting();
+                    meeting.setId(meetingId++);
+                    meeting.setDurationInGrains(durationInGrains);
+
+                    meeting.setRequiredLearner(learner);
+                    meeting.setRequiredPatient(patient);
+
+                    learner.setMeeting(meeting);
+                    patient.setMeeting(meeting);
+
+                    logger.trace("Created meeting with durationInGrains ({}),"
+                            + " requiredLearner ({}),"
+                            + " requiredPatient ({}).",
+                        durationInGrains,
+                        learner,
+                        patient);
+                    meetingList.add(meeting);
+                }
             }
         }
 
         meetingSchedule.setMeetingList(meetingList);
-        meetingSchedule.setAttendanceList(globalAttendanceList);
-        meetingSchedule.setPersonList(personList);
     }
 
     private void createTimeGrainList(MeetingSchedule meetingSchedule, Instant startTime,
