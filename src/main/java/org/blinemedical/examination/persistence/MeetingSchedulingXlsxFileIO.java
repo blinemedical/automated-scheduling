@@ -365,26 +365,20 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                     .parse(nextStringCell().getStringCellValue(), TIME_FORMATTER);
                 LocalTime endTime = LocalTime
                     .parse(nextStringCell().getStringCellValue(), TIME_FORMATTER);
-                LocalTime lunchHourStartTime = LocalTime
-                    .parse(nextStringCell().getStringCellValue(), TIME_FORMATTER);
                 int startMinuteOfDay = startTime.getHour() * 60 + startTime.getMinute();
                 int endMinuteOfDay = endTime.getHour() * 60 + endTime.getMinute();
-                int lunchHourStartMinuteOfDay =
-                    lunchHourStartTime.getHour() * 60 + lunchHourStartTime.getMinute();
                 for (int i = 0;
                     (endMinuteOfDay - startMinuteOfDay) > i * TimeGrain.GRAIN_LENGTH_IN_MINUTES;
                     i++) {
                     int timeGrainStartingMinuteOfDay =
                         i * TimeGrain.GRAIN_LENGTH_IN_MINUTES + startMinuteOfDay;
-                    if (timeGrainStartingMinuteOfDay < lunchHourStartMinuteOfDay
-                        || timeGrainStartingMinuteOfDay >= lunchHourStartMinuteOfDay + 60) {
-                        TimeGrain timeGrain = new TimeGrain();
-                        timeGrain.setId(timeGrainId);
-                        timeGrain.setGrainIndex((int) timeGrainId++);
-                        timeGrain.setDay(day);
-                        timeGrain.setStartingMinuteOfDay(timeGrainStartingMinuteOfDay);
-                        timeGrainList.add(timeGrain);
-                    }
+
+                    TimeGrain timeGrain = new TimeGrain();
+                    timeGrain.setId(timeGrainId);
+                    timeGrain.setGrainIndex((int) timeGrainId++);
+                    timeGrain.setDay(day);
+                    timeGrain.setStartingMinuteOfDay(timeGrainStartingMinuteOfDay);
+                    timeGrainList.add(timeGrain);
                 }
             }
             solution.setDayList(dayList);
@@ -575,7 +569,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             nextHeaderCell("Day");
             nextHeaderCell("Start");
             nextHeaderCell("End");
-            nextHeaderCell("Lunch hour start time");
             for (Day dayOfYear : solution.getDayList()) {
                 nextRow();
                 LocalDate date = LocalDate
@@ -593,12 +586,10 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
                 }
                 LocalTime startTime = LocalTime.ofSecondOfDay(startMinuteOfDay * 60);
                 LocalTime endTime = LocalTime.ofSecondOfDay(endMinuteOfDay * 60);
-                LocalTime lunchHourStartTime = LocalTime.ofSecondOfDay(12 * 60 * 60); // 12pm
 
                 nextCell().setCellValue(DAY_FORMATTER.format(date));
                 nextCell().setCellValue(TIME_FORMATTER.format(startTime));
                 nextCell().setCellValue(TIME_FORMATTER.format(endTime));
-                nextCell().setCellValue(TIME_FORMATTER.format(lunchHourStartTime));
             }
             autoSizeColumnsWithHeader();
         }
@@ -852,10 +843,6 @@ public class MeetingSchedulingXlsxFileIO extends AbstractXlsxSolutionFileIO<Meet
             for (TimeGrain timeGrain : solution.getTimeGrainList()) {
                 if (timeGrain.getGrainIndex() % (Math
                     .ceil(minimumInterval * 1.0 / TimeGrain.GRAIN_LENGTH_IN_MINUTES)) == 0) {
-                    if (mergeStart > 0) {
-                        currentSheet.addMergedRegion(
-                            new CellRangeAddress(mergeStart, currentRowNumber, 0, 0));
-                    }
                     nextRow();
                     nextCell().setCellValue(timeGrain.getDateTimeString());
                     mergeStart = currentRowNumber;
